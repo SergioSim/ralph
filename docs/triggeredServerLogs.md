@@ -1,4 +1,4 @@
-# triggered server logs
+# Triggered server logs
 
 For some specific page requests we write additional logs on top of the usual server logs
 
@@ -20,16 +20,16 @@ source common/lib/xmodule/xmodule/capa_base.py
         - the **usage_key** corresponds to the key location of the problem block
         - the **display_name** corresponds to the **fields.dispay_name** of the problem block
     EXAMPLE (ommiting common server fields / specific to triggered event fields):
-
-            {
-                "context": {
-                        "module": {
-                            "usage_key": "block-v1:organisationducours+numeroducours+sessionducours+type@problem+block@da9c3b1ca605401a85542d1b3c01159b",
-                            "display_name": "Text Input with Hints and Feedback"
-                        }
-                    },
+```json
+{
+    "context": {
+            "module": {
+                "usage_key": "block-v1:organisationducours+numeroducours+sessionducours+type@problem+block@da9c3b1ca605401a85542d1b3c01159b",
+                "display_name": "Text Input with Hints and Feedback"
             }
-
+        },
+}
+```
 - optional common fields (For blocks that are inherited from a content library (source module_renderer.py)):
     - context : **module**: { **"original_usage_key"**: value, **"original_usage_version"**: value}
 
@@ -45,17 +45,17 @@ source function get_demand_hint
     - **hint_text** - The text of the hint that was displayed to the user
 
 - EXAMPLE (ommiting common server fields):
-
-                {
-                    "event_type": "edx.problem.hint.demandhint_displayed",
-                    "event": {
-                        "hint_index": 1,
-                        "module_id": "block-v1:organisationducours+numeroducours+sessionducours+type@problem+block@da9c3b1ca605401a85542d1b3c01159b",
-                        "hint_text": "Consider all 50 states, not just the continental United States.",
-                        "hint_len": 2
-                    }
-                }
-
+```json
+{
+    "event_type": "edx.problem.hint.demandhint_displayed",
+    "event": {
+        "hint_index": 1,
+        "module_id": "block-v1:organisationducours+numeroducours+sessionducours+type@problem+block@da9c3b1ca605401a85542d1b3c01159b",
+        "hint_text": "Consider all 50 states, not just the continental United States.",
+        "hint_len": 2
+    }
+}
+```
 #### Proposed xApi Conversion:
 
 to select only this type of event we could use: <br>
@@ -64,61 +64,61 @@ to select only this type of event we could use: <br>
 Proposed STATEMENT: <br>
 **Student** **Interracted** with **Assessment** (usage_key) hint button (event_type) and recieved the **Hint** (event) as a result <br>
 
-
-    {
-      "timestamp": {{time}},
-      "actor": {
-          "account": {
-              "name": {{username}},
-              "homePage": "http://fun-mooc.fr"
-          },
-          "objectType": "Agent"
-      },
-      "verb": {
-          "id": "http://adlnet.gov/expapi/verbs/interacted",
-          "display": {
-              "en-US": "interacted"
-          }
-      },
-      "object": {
-          "id": "http://fun-mooc.fr/xblock/{{context[module[usage_key]]}}/{{event_type}}",
-          "definition": {
-            "type": "http://adlnet.gov/expapi/activities/assessment",
-            "name": {
-              "en-us": "Assessment"
-              },
-            "extensions": {
-              # provide additional information defining the Activity
-              "http://fun-mooc.fr/extension/path": {{context[path]}},
-              "http://fun-mooc.fr/extension/module": {{context[module]}},
-              "http://fun-mooc.fr/extension/event_type": {{event_type}},
-            }
-          },
-          "objectType": "Activity"
-      },
-      "result": {
-        "extensions": {
-            # elements related to the outcome
-            "http://fun-mooc.fr/extension/{{event_type}}/event": {{event}}
+```json
+{
+    "timestamp": "{{time}}",
+    "actor": {
+        "account": {
+            "name": "{{username}}",
+            "homePage": "http://fun-mooc.fr"
+        },
+        "objectType": "Agent"
+    },
+    "verb": {
+        "id": "http://adlnet.gov/expapi/verbs/interacted",
+        "display": {
+            "en-US": "interacted"
         }
-      },
-      "context": {
-        "platform" : "http://fun-mooc.fr"
+    },
+    "object": {
+        "id": "http://fun-mooc.fr/xblock/{{context[module[usage_key]]}}/{{event_type}}",
+        "definition": {
+        "type": "http://adlnet.gov/expapi/activities/assessment",
+        "name": {
+            "en-us": "Assessment"
+            },
         "extensions": {
-          //provide context to the core experience
-          "http://fun-mooc.fr/extension/ip": {{ip}},
-          "http://fun-mooc.fr/extension/agent": {{agent}},
-          "http://fun-mooc.fr/extension/host": {{host}},
-          "http://fun-mooc.fr/extension/referer": {{referer}},
-          "http://fun-mooc.fr/extension/accept_language": {{accept_language}},
-          "http://fun-mooc.fr/extension/org_id": {{context[org_id]}},
-          "http://fun-mooc.fr/extension/course_id": {{context[course_id]}},
-          "http://fun-mooc.fr/extension/course_user_tags": {{context[course_user_tags]}},
-          "http://fun-mooc.fr/extension/user_id": {{context[user_id]}},
+            // provide additional information defining the Activity
+            "http://fun-mooc.fr/extension/path": "{{context[path]}}",
+            "http://fun-mooc.fr/extension/module": "{{context[module]}}",
+            "http://fun-mooc.fr/extension/event_type": "{{event_type}}",
         }
-      }
+        },
+        "objectType": "Activity"
+    },
+    "result": {
+    "extensions": {
+        // elements related to the outcome
+        "http://fun-mooc.fr/extension/{{event_type}}/event": "{{event}}"
     }
-
+    },
+    "context": {
+        "platform" : "http://fun-mooc.fr",
+        "extensions": {
+            //provide context to the core experience
+            "http://fun-mooc.fr/extension/ip": "{{ip}}",
+            "http://fun-mooc.fr/extension/agent": "{{agent}}",
+            "http://fun-mooc.fr/extension/host": "{{host}}",
+            "http://fun-mooc.fr/extension/referer": "{{referer}}",
+            "http://fun-mooc.fr/extension/accept_language": "{{accept_language}}",
+            "http://fun-mooc.fr/extension/org_id": "{{context[org_id]}}",
+            "http://fun-mooc.fr/extension/course_id": "{{context[course_id]}}",
+            "http://fun-mooc.fr/extension/course_user_tags": "{{context[course_user_tags]}}",
+            "http://fun-mooc.fr/extension/user_id": "{{context[user_id]}}",
+        }
+    }
+}
+```
 ### When the user clicks on the submit button
 - URL: /courses/course-v1:{course_key}/xblock/block-v1:{course_key}+type@problem+block@{block_id}/handler/xmodule_handler/**problem_check**
 - beside the server event capturing the content of the POST request and the browser events "**problem_check**"/"**problem_graded**" additionnal events are triggered:
@@ -183,70 +183,70 @@ Proposed STATEMENT: <br>
         - **variant** (str): empty string if randomization is set to NEVER - else: the corresponding randomization `seed` value.
 
         - EXAMPLE (ommiting common server/triggered fields)
-
-                {
-                    "event_type": "problem_check",
-                        "event": {
-                            "submission": {
-                                "da9c3b1ca605401a85542d1b3c01159b_2_1": {
-                                    "input_type": "textline",
-                                    "question": "Which U.S. state has the largest land area?",
-                                    "response_type": "stringresponse",
-                                    "answer": "Texas",
-                                    "variant": 923,
-                                    "correct": false
-                                },
-                                "da9c3b1ca605401a85542d1b3c01159b_3_1": {
-                                    "input_type": "choicegroup",
-                                    "question": "Which of the following is a vegetable?",
-                                    "response_type": "multiplechoiceresponse",
-                                    "answer": "pumpkin <choicehint>A pumpkin is the fertilized ovary of a squash plant and contains seeds, meaning it is a fruit.</choicehint>",
-                                    "variant": 923,
-                                    "correct": false
-                                }
-                            },
-                            "success": "incorrect",
-                            "grade": 0,
-                            "correct_map": {
-                                "da9c3b1ca605401a85542d1b3c01159b_2_1": {
-                                    "hint": "",
-                                    "hintmode": null,
-                                    "correctness": "incorrect",
-                                    "npoints": null,
-                                    "answervariable": null,
-                                    "msg": "<div class=\"feedback-hint-incorrect\"><div class=\"hint-label\">Incorrect: </div><div class=\"hint-text\">While many people think Texas is the largest state, it is actually the second largest, with 261,797 square miles.</div></div>",
-                                    "queuestate": null
-                                },
-                                "da9c3b1ca605401a85542d1b3c01159b_3_1": {
-                                    "hint": "",
-                                    "hintmode": null,
-                                    "correctness": "incorrect",
-                                    "npoints": null,
-                                    "answervariable": null,
-                                    "msg": "<div class=\"feedback-hint-incorrect\"><div class=\"hint-label\">Incorrect: </div><div class=\"hint-text\">A pumpkin is the fertilized ovary of a squash plant and contains seeds, meaning it is a fruit.</div></div>",
-                                    "queuestate": null
-                                }
-                            },
-                            "state": {
-                                "student_answers": {},
-                                "seed": 923,
-                                "done": false,
-                                "correct_map": {},
-                                "input_state": {
-                                    "da9c3b1ca605401a85542d1b3c01159b_2_1": {},
-                                    "da9c3b1ca605401a85542d1b3c01159b_3_1": {}
-                                }
-                            },
-                            "answers": {
-                                "da9c3b1ca605401a85542d1b3c01159b_2_1": "Texas",
-                                "da9c3b1ca605401a85542d1b3c01159b_3_1": "choice_1"
-                            },
-                            "attempts": 8,
-                            "max_grade": 2,
-                            "problem_id": "block-v1:organisationducours+numeroducours+sessionducours+type@problem+block@da9c3b1ca605401a85542d1b3c01159b"
-                        }
+```json
+{
+    "event_type": "problem_check",
+        "event": {
+            "submission": {
+                "da9c3b1ca605401a85542d1b3c01159b_2_1": {
+                    "input_type": "textline",
+                    "question": "Which U.S. state has the largest land area?",
+                    "response_type": "stringresponse",
+                    "answer": "Texas",
+                    "variant": 923,
+                    "correct": false
+                },
+                "da9c3b1ca605401a85542d1b3c01159b_3_1": {
+                    "input_type": "choicegroup",
+                    "question": "Which of the following is a vegetable?",
+                    "response_type": "multiplechoiceresponse",
+                    "answer": "pumpkin <choicehint>A pumpkin is the fertilized ovary of a squash plant and contains seeds, meaning it is a fruit.</choicehint>",
+                    "variant": 923,
+                    "correct": false
                 }
-
+            },
+            "success": "incorrect",
+            "grade": 0,
+            "correct_map": {
+                "da9c3b1ca605401a85542d1b3c01159b_2_1": {
+                    "hint": "",
+                    "hintmode": null,
+                    "correctness": "incorrect",
+                    "npoints": null,
+                    "answervariable": null,
+                    "msg": "<div class=\"feedback-hint-incorrect\"><div class=\"hint-label\">Incorrect: </div><div class=\"hint-text\">While many people think Texas is the largest state, it is actually the second largest, with 261,797 square miles.</div></div>",
+                    "queuestate": null
+                },
+                "da9c3b1ca605401a85542d1b3c01159b_3_1": {
+                    "hint": "",
+                    "hintmode": null,
+                    "correctness": "incorrect",
+                    "npoints": null,
+                    "answervariable": null,
+                    "msg": "<div class=\"feedback-hint-incorrect\"><div class=\"hint-label\">Incorrect: </div><div class=\"hint-text\">A pumpkin is the fertilized ovary of a squash plant and contains seeds, meaning it is a fruit.</div></div>",
+                    "queuestate": null
+                }
+            },
+            "state": {
+                "student_answers": {},
+                "seed": 923,
+                "done": false,
+                "correct_map": {},
+                "input_state": {
+                    "da9c3b1ca605401a85542d1b3c01159b_2_1": {},
+                    "da9c3b1ca605401a85542d1b3c01159b_3_1": {}
+                }
+            },
+            "answers": {
+                "da9c3b1ca605401a85542d1b3c01159b_2_1": "Texas",
+                "da9c3b1ca605401a85542d1b3c01159b_3_1": "choice_1"
+            },
+            "attempts": 8,
+            "max_grade": 2,
+            "problem_id": "block-v1:organisationducours+numeroducours+sessionducours+type@problem+block@da9c3b1ca605401a85542d1b3c01159b"
+        }
+}
+```
 #### Proposed xApi Conversion:
 
 to select only this type of event we could use: <br>
@@ -256,77 +256,77 @@ to select only this type of event we could use: <br>
 
 Proposed STATEMENT: <br>
 **Student** **Submitted** the **Assessment** (usage_key) by clicking on submit (event_type)  and recieved a **score** (event[grade]), commited the **submission** (event[submission]), incremented the **attempt** count (event[attempts]) etc. as a result <br>
-
-    {
-      "timestamp": {{time}},
-      "actor": {
-          "account": {
-              "name": {{username}},
-              "homePage": "http://fun-mooc.fr"
-          },
-          "objectType": "Agent"
-      },
-      "verb": {
-          "id": "http://activitystrea.ms/schema/1.0/submit",
-          "display": {
-              "en-US": "submitted"
-          }
-      },
-      "object": {
-          "id": "http://fun-mooc.fr/xblock/{{context[module[usage_key]]}}/{{event_type}}",
-          "definition": {
-            "type": "http://adlnet.gov/expapi/activities/assessment",
-            "name": {
-              "en-us": "Assessment"
-              },
-            "extensions": {
-              # provide additional information defining the Activity
-              "http://fun-mooc.fr/extension/path": {{context[path]}},
-              "http://fun-mooc.fr/extension/module": {{context[module]}},
-              "http://fun-mooc.fr/extension/event_type": {{event_type}},
-            }
-          },
-          "objectType": "Activity"
-      },
-      "result": {
-        "score": {
-            "scaled": {{event[grade]}} / {{event[max_grade]}},
-            "raw": {{event[grade]}},
-            "min": 0,
-            "max": {{event[max_grade]}}
+```json
+{
+    "timestamp": "{{time}}",
+    "actor": {
+        "account": {
+            "name": "{{username}}",
+            "homePage": "http://fun-mooc.fr"
         },
-        "success": {{event[success]}},
-        "extensions": {
-            # elements related to the outcome
-            ### VERSION 1 (filtering out information that is already present)
-            "http://fun-mooc.fr/extension/submission": {{event[submission]}},
-            "http://fun-mooc.fr/extension/correct_map": {{event[correct_map]}},
-            "http://fun-mooc.fr/extension/state": {{event[state]}},
-            "http://fun-mooc.fr/extension/answers": {{event[answers]}},
-            "http://fun-mooc.fr/extension/attempts": {{event[attempts]}},
-            ### END VERSION 1
-            ### VERSION 2 (the easy way, but larger events)
-            "http://fun-mooc.fr/extension/{{event_type}}/event": {{event}}
-            ### END VERSION 2
+        "objectType": "Agent"
+    },
+    "verb": {
+        "id": "http://activitystrea.ms/schema/1.0/submit",
+        "display": {
+            "en-US": "submitted"
         }
-      },
-      "context": {
-        "platform" : "http://fun-mooc.fr"
+    },
+    "object": {
+        "id": "http://fun-mooc.fr/xblock/{{context[module[usage_key]]}}/{{event_type}}",
+        "definition": {
+        "type": "http://adlnet.gov/expapi/activities/assessment",
+        "name": {
+            "en-us": "Assessment"
+            },
         "extensions": {
-          # add context to the core experience
-          "http://fun-mooc.fr/extension/ip": {{ip}},
-          "http://fun-mooc.fr/extension/agent": {{agent}},
-          "http://fun-mooc.fr/extension/host": {{host}},
-          "http://fun-mooc.fr/extension/referer": {{referer}},
-          "http://fun-mooc.fr/extension/accept_language": {{accept_language}},
-          "http://fun-mooc.fr/extension/org_id": {{context[org_id]}},
-          "http://fun-mooc.fr/extension/course_id": {{context[course_id]}},
-          "http://fun-mooc.fr/extension/course_user_tags": {{context[course_user_tags]}},
-          "http://fun-mooc.fr/extension/user_id": {{context[user_id]}},
+            // provide additional information defining the Activity
+            "http://fun-mooc.fr/extension/path": "{{context[path]}}",
+            "http://fun-mooc.fr/extension/module": "{{context[module]}}",
+            "http://fun-mooc.fr/extension/event_type": "{{event_type}}",
         }
-      }
+        },
+        "objectType": "Activity"
+    },
+    "result": {
+    "score": {
+        "scaled": "{{event[grade]}} / {{event[max_grade]}}",
+        "raw": "{{event[grade]}}",
+        "min": 0,
+        "max": "{{event[max_grade]}}"
+    },
+    "success": "{{event[success]}}",
+    "extensions": {
+        // elements related to the outcome
+        //### VERSION 1 (filtering out information that is already present)
+        "http://fun-mooc.fr/extension/submission": "{{event[submission]}}",
+        "http://fun-mooc.fr/extension/correct_map": "{{event[correct_map]}}",
+        "http://fun-mooc.fr/extension/state": "{{event[state]}}",
+        "http://fun-mooc.fr/extension/answers": "{{event[answers]}}",
+        "http://fun-mooc.fr/extension/attempts": "{{event[attempts]}}",
+        //### END VERSION 1
+        //### VERSION 2 (the easy way, but larger events)
+        "http://fun-mooc.fr/extension/{{event_type}}/event": "{{event}}"
+        //### END VERSION 2
     }
-
+    },
+    "context": {
+    "platform": "http://fun-mooc.fr",
+    "extensions": {
+        // add context to the core experience
+        "http://fun-mooc.fr/extension/ip": "{{ip}}",
+        "http://fun-mooc.fr/extension/agent": "{{agent}}",
+        "http://fun-mooc.fr/extension/host": "{{host}}",
+        "http://fun-mooc.fr/extension/referer": "{{referer}}",
+        "http://fun-mooc.fr/extension/accept_language": "{{accept_language}}",
+        "http://fun-mooc.fr/extension/org_id": "{{context[org_id]}}",
+        "http://fun-mooc.fr/extension/course_id": "{{context[course_id]}}",
+        "http://fun-mooc.fr/extension/course_user_tags": "{{context[course_user_tags]}}",
+        "http://fun-mooc.fr/extension/user_id": "{{context[user_id]}}",
+    }
+    }
+}
+```
 
 #### **event_type**: "edx.problem.hint.feedback_displayed" (triggered only for problems including feedback messages)
 

@@ -12,26 +12,28 @@ also if URL starts with "/event_logs" and user.is_staff - we don't log
 server logs are handled in the middleware layer
 
 ## Example event:
-    {
-        "username": "toto",
-        "event_type": "/courses/course-v1:test+CS101+2020_T1/info",
-        "ip": "172.18.0.1",
-        "agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0",
-        "host": "afcfb5c63273",
-        "referer": "",
-        "accept_language": "en-US,en;q=0.5",
-        "event": "{\"POST\": {}, \"GET\": {}}",
-        "event_source": "server",
-        "context": {
-            "course_user_tags": {},
-            "user_id": 2,
-            "org_id": "test",
-            "course_id": "course-v1:test+CS101+2020_T1",
-            "path": "/courses/course-v1:test+CS101+2020_T1/info"
-        },
-        "time": "2020-02-25T12:18:00.612692+00:00",
-        "page": null
-    }
+```json
+{
+    "username": "toto",
+    "event_type": "/courses/course-v1:test+CS101+2020_T1/info",
+    "ip": "172.18.0.1",
+    "agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0",
+    "host": "afcfb5c63273",
+    "referer": "",
+    "accept_language": "en-US,en;q=0.5",
+    "event": "{\"POST\": {}, \"GET\": {}}",
+    "event_source": "server",
+    "context": {
+        "course_user_tags": {},
+        "user_id": 2,
+        "org_id": "test",
+        "course_id": "course-v1:test+CS101+2020_T1",
+        "path": "/courses/course-v1:test+CS101+2020_T1/info"
+    },
+    "time": "2020-02-25T12:18:00.612692+00:00",
+    "page": null
+}
+```
 
 [username](#username-value) <br>
 [event_type](#event_type-value) <br>
@@ -215,50 +217,50 @@ to select only this type of server event we could use: <br>
 &emsp;{{event_source}} == "server" && <br>
 &emsp;{{page}} == null && <br>
 &emsp;{{event_type}} == {{context[path]}}<br>
-
-    {
-      "timestamp": {{time}},
-      "actor": {
-          "account": {
-              "name": {{username}},
-              "homePage": "http://fun-mooc.fr"
-          },
-          "objectType": "Agent"
+```json
+{
+  "timestamp": "{{time}}",
+  "actor": {
+      "account": {
+          "name": "{{username}}",
+          "homePage": "http://fun-mooc.fr"
       },
-      "verb": {
-          "id": "http://adlnet.gov/expapi/verbs/launched",
-          "display": {
-              "en-US": "launched"
+      "objectType": "Agent"
+  },
+  "verb": {
+      "id": "http://adlnet.gov/expapi/verbs/launched",
+      "display": {
+          "en-US": "launched"
+      }
+  },
+  "object": {
+      "id": "http://fun-mooc.fr/{{event_type}}",
+      "definition": {
+        "type": "http://activitystrea.ms/schema/1.0/page",
+        "name": {
+          "en-US": "page"
           }
       },
-      "object": {
-          "id": "http://fun-mooc.fr/{{event_type}}",
-          "definition": {
-            "type": "http://activitystrea.ms/schema/1.0/page",
-            "name": {
-              "en-US": "page"
-              }
-          },
-          "objectType": "Activity"
-      },
-      "context": {
-        "platform" : "http://fun-mooc.fr"
-        "extensions": {
-          //provide context to the core experience
-          "http://fun-mooc.fr/extension/ip": {{ip}},
-          "http://fun-mooc.fr/extension/agent": {{agent}},
-          "http://fun-mooc.fr/extension/host": {{host}},
-          "http://fun-mooc.fr/extension/referer": {{referer}},
-          "http://fun-mooc.fr/extension/accept_language": {{accept_language}},
-          "http://fun-mooc.fr/extension/course_user_tags": {{context[course_user_tags]}},
-          "http://fun-mooc.fr/extension/user_id": {{context[user_id]}},
-          "http://fun-mooc.fr/extension/org_id": {{context[org_id]}},
-          "http://fun-mooc.fr/extension/course_id": {{context[course_id]}},
-          "http://fun-mooc.fr/extension/server/event": {{event}}
-        }
-      }
+      "objectType": "Activity"
+  },
+  "context": {
+    "platform" : "http://fun-mooc.fr"
+    "extensions": {
+      //provide context to the core experience
+      "http://fun-mooc.fr/extension/ip": "{{ip}}",
+      "http://fun-mooc.fr/extension/agent": "{{agent}}",
+      "http://fun-mooc.fr/extension/host": "{{host}}",
+      "http://fun-mooc.fr/extension/referer": "{{referer}}",
+      "http://fun-mooc.fr/extension/accept_language": "{{accept_language}}",
+      "http://fun-mooc.fr/extension/course_user_tags": "{{context[course_user_tags]}}",
+      "http://fun-mooc.fr/extension/user_id": "{{context[user_id]}}",
+      "http://fun-mooc.fr/extension/org_id": "{{context[org_id]}}",
+      "http://fun-mooc.fr/extension/course_id": "{{context[course_id]}}",
+      "http://fun-mooc.fr/extension/server/event": "{{event}}"
     }
-
+  }
+}
+```
 ### additional thoughts
 - we could transform the event[event] string into an object (if it is not truncated):
   - "event": "{\"POST\": {}, \"GET\": {}}" => "event": {"POST": {}, "GET": {}},

@@ -1,4 +1,4 @@
-# browser event logs 
+# Browser event logs 
 
 Log when a user sends a (XHR) POST/GET request to the **"/event"** URL
 
@@ -7,27 +7,30 @@ The request should provide **"event_type"**, **"event"**, and **"page"** argumen
 Note: browser events are easily indentified by their "event-source": **"browser"**
 
 ## Example event:
-    {
-      "username": "toto",
-      "event_source": "browser",
-      "name": "page_close",
-      "accept_language": "en-US,en;q=0.5",
-      "time": "2020-03-02T10:12:08.992343+00:00",
-      "agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:73.0) Gecko/20100101 Firefox/73.0",
-      "page": "http://localhost:8072/courses/course-v1:universityX+CS111+2020_T1/courseware/5edb208a13004490909da020a9bd115d/cd2bb35541e74e8a8be5d2235d122fd9/",
-      "host": "50528a92a868",
-      "session": "7c26f91b2debb8fa9df150a823c9b43c",
-      "referer": "http://localhost:8072/courses/course-v1:universityX+CS111+2020_T1/courseware/5edb208a13004490909da020a9bd115d/cd2bb35541e74e8a8be5d2235d122fd9/ ",
-      "context": {
-          "user_id": 2,
-          "org_id": "universityX",
-          "course_id": "course-v1:universityX+CS111+2020_T1",
-          "path": "/event"
-      },
-      "ip": "172.18.0.1",
-      "event": "{}",
-      "event_type": "page_close"
-    }
+
+```json
+{
+  "username": "toto",
+  "event_source": "browser",
+  "name": "page_close",
+  "accept_language": "en-US,en;q=0.5",
+  "time": "2020-03-02T10:12:08.992343+00:00",
+  "agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:73.0) Gecko/20100101 Firefox/73.0",
+  "page": "http://localhost:8072/courses/course-v1:universityX+CS111+2020_T1/courseware/5edb208a13004490909da020a9bd115d/cd2bb35541e74e8a8be5d2235d122fd9/",
+  "host": "50528a92a868",
+  "session": "7c26f91b2debb8fa9df150a823c9b43c",
+  "referer": "http://localhost:8072/courses/course-v1:universityX+CS111+2020_T1/courseware/5edb208a13004490909da020a9bd115d/cd2bb35541e74e8a8be5d2235d122fd9/ ",
+  "context": {
+      "user_id": 2,
+      "org_id": "universityX",
+      "course_id": "course-v1:universityX+CS111+2020_T1",
+      "path": "/event"
+  },
+  "ip": "172.18.0.1",
+  "event": "{}",
+  "event_type": "page_close"
+}
+```
 
 ### key-value pairs retrieved the same way as in the Server logs:
 - username
