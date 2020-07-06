@@ -678,10 +678,8 @@ def test_invalid_event_type_textbook_pdf_thumbnail_navigated(browser_events):
         "chapter": f"/asset-v1:{course_id[10:]}+type@asset+block/test.pdf",
         "page": 1,
         "name": "textbook.pdf.thumbnail.navigated",
-        "thumbnail_title": "Page 1",
     }
     with pytest.raises(ValidationError):
-        del event["thumbnail_title"]
         browser_events(
             1,
             event_type="textbook.pdf.thumbnail.navigated",
@@ -696,3 +694,282 @@ def test_invalid_event_type_textbook_pdf_thumbnail_navigated(browser_events):
             context_args={"org_id": org_id, "course_id": course_id},
             event=event,
         )
+
+
+def test_valid_event_type_textbook_pdf_zoom_buttons_changed(browser_events):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type textbook.pdf.zoom.buttons.changed and
+    textbook.pdf.page.scrolled
+    """
+    org_id = "org"
+    course_id = "course-v1:org+numeroCours+sessiondCours"
+    event = {
+        "chapter": f"/asset-v1:{course_id[10:]}+type@asset+block/test.pdf",
+        "page": 1,
+    }
+    for event_type in [
+        "textbook.pdf.zoom.buttons.changed",
+        "textbook.pdf.page.scrolled",
+    ]:
+        try:
+            event["name"] = event_type
+            event["direction"] = "in" if event_type[-7:] == "changed" else "up"
+            browser_events(
+                1,
+                event_type=event_type,
+                context_args={"org_id": org_id, "course_id": course_id},
+                event=json.dumps(event),
+            )
+            event["direction"] = "out" if event_type[-7:] == "changed" else "down"
+            browser_events(
+                1,
+                event_type=event_type,
+                context_args={"org_id": org_id, "course_id": course_id},
+                event=json.dumps(event),
+            )
+        except ValidationError:
+            pytest.fail(f"Valid browser event_type {event_type} should not raise exceptions")
+
+
+def test_invalid_event_type_textbook_pdf_zoom_buttons_changed(browser_events):
+    """Test that a invalid event value does raise a ValidationError
+    for browser event type textbook.pdf.zoom.buttons.changed and
+    textbook.pdf.page.scrolled
+    """
+    org_id = "org"
+    course_id = "course-v1:org+numeroCours+sessiondCours"
+    event = {
+        "chapter": f"/asset-v1:{course_id[10:]}+type@asset+block/test.pdf",
+        "page": 1,
+    }
+    for event_type in [
+        "textbook.pdf.zoom.buttons.changed",
+        "textbook.pdf.page.scrolled",
+    ]:
+        event["name"] = event_type
+        with pytest.raises(ValidationError):
+            # missing direction
+            browser_events(
+                1,
+                event_type=event_type,
+                context_args={"org_id": org_id, "course_id": course_id},
+                event=event
+            )
+        with pytest.raises(ValidationError):
+            event["direction"] = "not one of in/out/up/down"
+            browser_events(
+                1,
+                event_type=event_type,
+                context_args={"org_id": org_id, "course_id": course_id},
+                event=event,
+            )
+        with pytest.raises(ValidationError):
+            event["direction"] = None
+            browser_events(
+                1,
+                event_type=event_type,
+                context_args={"org_id": org_id, "course_id": course_id},
+                event=event,
+            )
+
+
+def test_valid_event_type_textbook_pdf_zoom_menu_changed(browser_events):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type textbook.pdf.zoom.menu.changed
+    """
+    org_id = "org"
+    course_id = "course-v1:org+numeroCours+sessiondCours"
+    event = {
+        "chapter": f"/asset-v1:{course_id[10:]}+type@asset+block/test.pdf",
+        "page": 1,
+        "name": "textbook.pdf.zoom.menu.changed",
+        "amaunt": "1",
+    }
+    try:
+        browser_events(
+            1,
+            event_type=event["name"],
+            context_args={"org_id": org_id, "course_id": course_id},
+            event=json.dumps(event),
+        )
+    except ValidationError:
+        pytest.fail(
+            f"Valid browser event_type textbook.pdf.zoom.menu.changed "
+            f"should not raise exceptions"
+        )
+
+
+def test_invalid_event_type_textbook_pdf_zoom_menu_changed(browser_events):
+    """Test that a invalid event value does raise a ValidationError
+    for browser event type textbook.pdf.zoom.menu.changed
+    """
+    org_id = "org"
+    course_id = "course-v1:org+numeroCours+sessiondCours"
+    event = {
+        "chapter": f"/asset-v1:{course_id[10:]}+type@asset+block/test.pdf",
+        "page": 1,
+        "name": "textbook.pdf.zoom.menu.changed",
+    }
+    with pytest.raises(ValidationError):
+        browser_events(
+            1,
+            event_type="textbook.pdf.zoom.menu.changed",
+            context_args={"org_id": org_id, "course_id": course_id},
+            event=event,
+        )
+    with pytest.raises(ValidationError):
+        event["amaunt"] = 1
+        browser_events(
+            1,
+            event_type="textbook.pdf.zoom.menu.changed",
+            context_args={"org_id": org_id, "course_id": course_id},
+            event=event,
+        )
+    with pytest.raises(ValidationError):
+        event["amaunt"] = "1 "
+        browser_events(
+            1,
+            event_type="textbook.pdf.zoom.menu.changed",
+            context_args={"org_id": org_id, "course_id": course_id},
+            event=event,
+        )
+
+def test_valid_event_type_textbook_pdf_display_scaled(browser_events):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type textbook.pdf.display.scaled
+    """
+    pass
+
+
+def test_invalid_event_type_textbook_pdf_display_scaled(browser_events):
+    """Test that a invalid event value does raise a ValidationError
+    for browser event type textbook.pdf.display.scaled
+    """
+    pass
+
+# def test_event_with_event_type_textbook_pdf_display_scaled(browser_events):
+#     """check the textbook.pdf.display.scaled browser event"""
+#     sub_type = "textbook.pdf.display.scaled"
+#     events = browser_events(10, "browser", event_type=sub_type)
+#     fields = ["name", "page", "chapter", "amaunt"]
+#     check_textbook_pdf_name_and_chapter(events, fields, sub_type)
+
+
+def test_valid_event_type_textbook_pdf_page_loaded(browser_events):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type textbook.pdf.page.loaded
+    """
+    pass
+
+
+def test_invalid_event_type_textbook_pdf_page_loaded(browser_events):
+    """Test that a invalid event value does raise a ValidationError
+    for browser event type textbook.pdf.page.loaded
+    """
+    pass
+
+
+# def test_event_with_event_type_book_with_textbook_pdf_page_loaded(event):
+#     """check the book browser event with and without
+#     book_event_type textbook.pdf.page.loaded"""
+#     sub_type = "book"
+#     event_without_book_event_type = browser_events(1, event_type=sub_type)
+#     event_with_book_event_type = event(
+#         1,
+#         EventType.BROWSER,
+#         event_type=sub_type,
+#         book_event_type="textbook.pdf.page.loaded",
+#     )
+#     fields = ["name", "chapter", "type", "old", "new"]
+#     for events in [event_without_book_event_type, event_with_book_event_type]:
+#         check_textbook_pdf_name_and_chapter(events, fields, "textbook.pdf.page.loaded")
+#         assert json.loads(events.iloc[0]["event"])["type"] == "gotopage"
+
+def test_valid_event_type_textbook_pdf_page_navigatednext(browser_events):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type textbook.pdf.page..navigatednext
+    """
+    pass
+
+
+def test_invalid_event_type_textbook_pdf_page_navigatednext(browser_events):
+    """Test that a invalid event value does raise a ValidationError
+    for browser event type textbook.pdf.page..navigatednext
+    """
+    pass
+
+# def test_event_with_event_type_book_with_textbook_pdf_page_navigatednext(browser_events):
+#     """check the book browser event with book_event_type
+#     textbook.pdf.page.navigatednext"""
+#     sub_type = "book"
+#     events = event(
+#         10,
+#         EventType.BROWSER,
+#         event_type=sub_type,
+#         book_event_type="textbook.pdf.page.navigatednext",
+#     )
+#     fields = ["name", "chapter", "type", "new"]
+#     check_textbook_pdf_name_and_chapter(
+#         events, fields, "textbook.pdf.page.navigatednext"
+#     )
+#     _type = events["event"].apply(
+#         lambda x: json.loads(x)["type"] in ["prevpage", "nextpage"]
+#     )
+#     assert _type.all()
+
+
+def test_valid_event_type_book_with_textbook_pdf_search(browser_events):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type book
+    """
+    pass
+
+
+def test_invalid_event_type_book_with_textbook_pdf_search(browser_events):
+    """Test that a invalid event value does raise a ValidationError
+    for browser event type book
+    """
+    pass
+
+# def test_event_with_event_type_book_with_textbook_pdf_search(browser_events):
+#     """check the book browser event with book_event_types:
+#     textbook.pdf.search.executed,
+#     textbook.pdf.search.highlight.toggled,
+#     textbook.pdf.search.navigatednext and
+#     textbook.pdf.searchcasesensitivity.toggled
+#     """
+#     sub_type = "book"
+#     for book_event_type in [
+#         "textbook.pdf.search.executed",
+#         "textbook.pdf.search.highlight.toggled",
+#         "textbook.pdf.search.navigatednext",
+#         "textbook.pdf.searchcasesensitivity.toggled",
+#     ]:
+#         events = browser_events(
+#             15, event_type=sub_type, book_event_type=book_event_type,
+#         )
+#         fields = [
+#             "name",
+#             "chapter",
+#             "caseSensitive",
+#             "highlightAll",
+#             "page",
+#             "query",
+#             "status",
+#         ]
+#         boolean_fields = ["caseSensitive", "highlightAll"]
+#         if book_event_type == "textbook.pdf.search.navigatednext":
+#             fields.append("findprevious")
+#             boolean_fields.append("findprevious")
+
+#         check_textbook_pdf_name_and_chapter(events, fields, book_event_type)
+#         for boolean_field in boolean_fields:
+#             field = events["event"].apply(
+#                 lambda x, b=boolean_field: json.loads(x)[b] in [True, False]
+#             )
+#             assert field.all()
+#         for emptiable_field in ["status", "query"]:
+#             field = events["event"].apply(
+#                 lambda x, e=emptiable_field: json.loads(x)[e] == ""
+#             )
+#             assert 0 < sum(field) < 15
