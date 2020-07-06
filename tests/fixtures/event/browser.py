@@ -71,18 +71,20 @@ class _BrowserEventFactory(_BaseEventFactory):
     @staticmethod
     def handle_pdf_event(obj, course_key):
         """group logic for pdf related events"""
+        event = {}
         if obj.name in [
             "textbook.pdf.thumbnails.toggled",
             "textbook.pdf.outline.toggled",
             "textbook.pdf.page.navigated",
+            "textbook.pdf.thumbnail.navigated",
         ]:
-            event_json = {"page": FAKE.random_int(0, 1000)}
-            event_json[
-                "chapter"
-            ] = f"/asset-v1:{course_key}+type@asset+block/{FAKE.slug()}.pdf"
-            event_json["name"] = obj.name
-            return json.dumps(event_json)
-        return "{}"
+            event["page"] = FAKE.random_int(0, 1000)
+        if obj.name == "textbook.pdf.thumbnail.navigated":
+            event["thumbnail_title"] = f"Page {event['page']}"
+
+        event["chapter"] = f"/asset-v1:{course_key}+type@asset+block/{FAKE.slug()}.pdf"
+        event["name"] = obj.name
+        return json.dumps(event)
 
     # pylint: disable=no-member
     @factory.lazy_attribute

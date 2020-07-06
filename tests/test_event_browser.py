@@ -533,7 +533,10 @@ def test_valid_event_type_textbook_pdf_thumbnail_outline_toggled(browser_events)
 
 
 def test_invalid_event_type_textbook_pdf_thumbnail_outline_toggled(browser_events):
-    """Test that a invalid event value does raise a ValidationError"""
+    """Test that a invalid event value does raise a ValidationError
+    for browser events: textbook.pdf.thumbnails.toggled,
+    textbook.pdf.outline.toggled and textbook.pdf.page.navigated
+    """
     org_id = "org"
     course_id = "course-v1:org+numeroCours+sessiondCours"
     event = {}
@@ -637,3 +640,59 @@ def test_invalid_event_type_textbook_pdf_thumbnail_outline_toggled(browser_event
                 context_args={"org_id": org_id, "course_id": course_id},
                 event=json.dumps(event),
             )
+
+
+def test_valid_event_type_textbook_pdf_thumbnail_navigated(browser_events):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type textbook.pdf.thumbnail.navigated
+    """
+    org_id = "org"
+    course_id = "course-v1:org+numeroCours+sessiondCours"
+    event = {
+        "chapter": f"/asset-v1:{course_id[10:]}+type@asset+block/test.pdf",
+        "page": 1,
+        "name": "textbook.pdf.thumbnail.navigated",
+        "thumbnail_title": "Page 1",
+    }
+    try:
+        browser_events(
+            1,
+            event_type=event["name"],
+            context_args={"org_id": org_id, "course_id": course_id},
+            event=json.dumps(event),
+        )
+    except ValidationError:
+        pytest.fail(
+            f"Valid browser event_type textbook.pdf.thumbnail.navigated"
+            f"should not raise exceptions"
+        )
+
+
+def test_invalid_event_type_textbook_pdf_thumbnail_navigated(browser_events):
+    """Test that a invalid event value does raise a ValidationError
+    for browser events: textbook.pdf.thumbnail.navigated
+    """
+    org_id = "org"
+    course_id = "course-v1:org+numeroCours+sessiondCours"
+    event = {
+        "chapter": f"/asset-v1:{course_id[10:]}+type@asset+block/test.pdf",
+        "page": 1,
+        "name": "textbook.pdf.thumbnail.navigated",
+        "thumbnail_title": "Page 1",
+    }
+    with pytest.raises(ValidationError):
+        del event["thumbnail_title"]
+        browser_events(
+            1,
+            event_type="textbook.pdf.thumbnail.navigated",
+            context_args={"org_id": org_id, "course_id": course_id},
+            event=event,
+        )
+    with pytest.raises(ValidationError):
+        event["thumbnail_title"] = 123
+        browser_events(
+            1,
+            event_type="textbook.pdf.thumbnail.navigated",
+            context_args={"org_id": org_id, "course_id": course_id},
+            event=event,
+        )

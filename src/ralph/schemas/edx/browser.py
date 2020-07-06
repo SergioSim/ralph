@@ -46,7 +46,7 @@ class BrowserEventSchema(BaseEventSchema):
     `/event` URL
     """
 
-    # pylint: disable=no-self-use
+    # pylint: disable=no-self-use, no-self-argument
     @validates_schema
     def validate_name(self, data, **kwargs):
         """the name field should be equal to the event_type
@@ -59,14 +59,12 @@ class BrowserEventSchema(BaseEventSchema):
         if data["event_type"] == "book" and data["name"] not in BROWSER_NAME_FIELD:
             raise ValidationError("the name field is not one of the allowed values")
 
-    # pylint: disable=no-self-use
     @validates_schema
     def validate_context_path(self, data, **kwargs):
         """check that the context.path is equal to `/event`"""
         if data["context"]["path"] != "/event":
             raise ValidationError("The event path field is not `/event`")
 
-    # pylint: disable=no-self-use
     @validates_schema
     def validate_event_page_close(self, data, **kwargs):
         """check that event is empty dict when name is `page_close`"""
@@ -74,7 +72,6 @@ class BrowserEventSchema(BaseEventSchema):
             if data["event"] != "{}":
                 raise ValidationError("event should be {} when name is `page_close`")
 
-    # pylint: disable=no-self-use
     @validates_schema
     def validate_event_problem_show(self, data, **kwargs):
         """check that event is a prasable json objet when name is `problem_show`"""
@@ -83,17 +80,9 @@ class BrowserEventSchema(BaseEventSchema):
                 raise ValidationError(
                     "event context.org_id should not be empty when name is problem_show"
                 )
-            try:
-                event = json.loads(data["event"])
-            except (json.JSONDecodeError, TypeError):
-                raise ValidationError(
-                    "event field should contain a parsable json string"
-                )
-            keys = list(event.keys())
-            if len(keys) != 1 or "problem" not in keys:
-                raise ValidationError(
-                    "event field should contain only one key of name `problem`"
-                )
+            event = BrowserEventSchema.parse_json_and_check_keys(
+                data["event"], ["problem"]
+            )
             value = event["problem"]
             course_key = data["context"]["course_id"][10:]
             if value[:-32] != f"block-v1:{course_key}+type@problem+block@":
@@ -102,7 +91,6 @@ class BrowserEventSchema(BaseEventSchema):
                     f"block-v1:{course_key}+type@problem+block"
                 )
 
-    # pylint: disable=no-self-use
     @validates_schema
     def validate_event_problem_check(self, data, **kwargs):
         """check that event is a standard URL-encoded string or empty"""
@@ -115,7 +103,6 @@ class BrowserEventSchema(BaseEventSchema):
                         "event value should be a valid URL-encoded string"
                     )
 
-    # pylint: disable=no-self-use
     @validates_schema
     def validate_event_problem_graded_reset_save(self, data, **kwargs):
         """check that event is a list of lenght 2 and that the first
@@ -133,7 +120,6 @@ class BrowserEventSchema(BaseEventSchema):
                         "event first value in list should be a valid URL-encoded string"
                     )
 
-    # pylint: disable=no-self-use
     @validates_schema
     def validate_event_seq_goto(self, data, **kwargs):
         """check that the event is a string containing a json object
@@ -141,20 +127,10 @@ class BrowserEventSchema(BaseEventSchema):
         Same validation applies to `seq_next`, `seq_prev` names
         """
         if data["name"] in ["seq_goto", "seq_next", "seq_prev"]:
-            try:
-                event = json.loads(data["event"])
-            except (json.JSONDecodeError, TypeError):
-                raise ValidationError(
-                    "event field should contain a parsable json string"
-                )
-            keys = list(event.keys())
-            for key in ["new", "old", "id"]:
-                if key not in keys:
-                    raise ValidationError(
-                        f"{key} key should be present in the json string"
-                    )
-            if len(keys) != 3:
-                raise ValidationError("the event field should contain 3 keys")
+            event = BrowserEventSchema.parse_json_and_check_keys(
+                data["event"], ["new", "old", "id"]
+            )
+
             if not isinstance(event["new"], int) or not isinstance(event["old"], int):
                 raise ValidationError(
                     "event.new and event.old should have integer as values"
@@ -166,7 +142,6 @@ class BrowserEventSchema(BaseEventSchema):
                     f"block-v1:{course_key}+type@problem+block"
                 )
 
-    # pylint: disable=no-self-use
     @validates_schema
     def validate_event_seq_next_seq_prev(self, data, **kwargs):
         """check that the event is a string containing a json object
@@ -184,9 +159,10 @@ class BrowserEventSchema(BaseEventSchema):
                     f"event.old should be equal to (event.new {diff})"
                 )
 
-    # pylint: disable=no-self-use
     @validates_schema
-    def validate_event_textbook_pdf(self, data, **kwargs):
+    def validate_event_textbook_pdf(
+        self, data, **kwargs
+    ):  # pylint: disable=unused-argument
         """check that the event is a string containing a json object
         with 3 keys: `name`: string, `page`: integer > 0, `chapter`: url
         and `name` should be equal to event `name`
@@ -196,37 +172,66 @@ class BrowserEventSchema(BaseEventSchema):
             "textbook.pdf.outline.toggled",
             "textbook.pdf.page.navigated",
         ]:
-            try:
-                event = json.loads(data["event"])
-            except (json.JSONDecodeError, TypeError):
-                raise ValidationError(
-                    "event field should contain a parsable json string"
-                )
-            keys = list(event.keys())
-            for key in ["name", "page", "chapter"]:
-                if key not in keys:
-                    raise ValidationError(
-                        f"{key} key should be present in the json string"
-                    )
-            if len(keys) != 3:
-                raise ValidationError("the event field should contain 3 keys")
-            if not isinstance(event["page"], int) or not event["page"] > 0:
-                raise ValidationError("event.page should have integer as value > 0")
-            if data["name"] != event["name"]:
-                raise ValidationError(
-                    "event.name should be equal to the name of the browser event"
-                )
-            URL(relative=True)(event["chapter"])
-            course_key = data["context"]["course_id"][10:]
-            chapter_begin = f"/asset-v1:{course_key}+type@asset+block/"
-            if event["chapter"][: len(chapter_begin)] != chapter_begin:
-                raise ValidationError(
-                    f"the event.chapter should begin with {chapter_begin}"
-                )
-            if event["chapter"][-4:] != ".pdf":
-                raise ValidationError("the event.chapter should end with .pdf")
+            event = BrowserEventSchema.parse_json_and_check_keys(
+                data["event"], ["name", "page", "chapter"]
+            )
+            BrowserEventSchema.check_event_name_chapter_and_page(data, event)
 
-    # pylint: disable=no-self-argument, no-self-use
+    @validates_schema
+    def validate_event_textbook_pdf_thumbnail_navigated(self, data, **kwargs):
+        """check that the event is a string containing a json object
+        with 4 keys: `name`: string, `page`: integer > 0, `chapter`: url
+        and `name` should be equal to event `name`
+        """
+        if data["name"] == "textbook.pdf.thumbnail.navigated":
+            event = BrowserEventSchema.parse_json_and_check_keys(
+                data["event"], ["name", "page", "chapter", "thumbnail_title"]
+            )
+            BrowserEventSchema.check_event_name_chapter_and_page(data, event)
+            if not isinstance(event["thumbnail_title"], str):
+                raise ValidationError("event.thumbnail_title should be a string")
+
+    @staticmethod
+    def check_event_name_chapter_and_page(data, event):
+        """check that the event.`chapter` is an valid url
+        event.`name` should be equal to browser event field `name`
+        and `page` should be an integer > 0
+        """
+        if not isinstance(event["page"], int) or not event["page"] > 0:
+            raise ValidationError("event.page should have integer as value > 0")
+        if data["name"] != event["name"]:
+            raise ValidationError(
+                "event.name should be equal to the name of the browser event"
+            )
+        URL(relative=True)(event["chapter"])
+        course_key = data["context"]["course_id"][10:]
+        chapter_begin = f"/asset-v1:{course_key}+type@asset+block/"
+        if event["chapter"][: len(chapter_begin)] != chapter_begin:
+            raise ValidationError(
+                f"the event.chapter should begin with {chapter_begin}"
+            )
+        if event["chapter"][-4:] != ".pdf":
+            raise ValidationError("the event.chapter should end with .pdf")
+
+    @staticmethod
+    def parse_json_and_check_keys(json_str, keys_array):
+        """parse json string and check that it contains the keys in the
+        `keys_array` and no other keys
+        """
+        try:
+            event = json.loads(json_str)
+        except (json.JSONDecodeError, TypeError):
+            raise ValidationError("event field should contain a parsable json string")
+        keys = list(event.keys())
+        for key in keys_array:
+            if key not in keys:
+                raise ValidationError(f"{key} key should be present in the json string")
+        if len(keys) != len(keys_array):
+            raise ValidationError(
+                f"the event field should contain {len(keys_array)} keys"
+            )
+        return event
+
     def validate_session(value):
         """"check session field empty or 32 chars long"""
         if value != "" and len(value) != 32:
