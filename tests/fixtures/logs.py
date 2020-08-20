@@ -13,6 +13,7 @@ from djehouty.libgelf.formatters import GELFFormatter
 from .edx.base import BaseEventObjFactory
 from .edx.browser import BrowserEventObjFactory
 from .edx.feedback_displayed import FeedbackDisplayedObjFactory
+from .edx.ora.save_submission import SaveSubmissionObjFactory
 from .edx.server import ServerEventObjFactory
 
 
@@ -40,6 +41,7 @@ class EventType(Enum):
     SERVER = ServerEventObjFactory
     BROWSER = BrowserEventObjFactory
     FEEDBACK_DISPLAYED = FeedbackDisplayedObjFactory
+    SAVE_SUBMISSION = SaveSubmissionObjFactory
 
 
 def _event(size, event_type_enum, **kwargs):

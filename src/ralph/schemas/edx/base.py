@@ -57,10 +57,9 @@ class BaseContextSchema(Schema):
 
     @validates_schema
     def validate_path(self, data, **kwargs):
-        """path should be equal to
-        " /courses/{course_id}/xblock/block-v1:{course_id[10:]}"
-        "+type@problem+block@{usage_key}"
-        "/handler/xmodule_handler/problem_check"
+        """path should start with:
+        "/courses/{course_id}/xblock/block-v1:{course_id[10:]}
+        +type@problem+block@{usage_key}/handler/"
         """
         if "module" not in data:
             return
@@ -71,13 +70,13 @@ class BaseContextSchema(Schema):
             f"{data['course_id']}"
             f"/xblock/"
             f"{data['module']['usage_key']}/"
-            f"handler/xmodule_handler/problem_check"
+            f"handler/"
         )
-        if path != valid_path:
+        if path[: len(valid_path)] != valid_path:
             raise ValidationError(
-                f"path should be equal to"
-                f"{valid_path}"
-                f" and {path} does not match!"
+                f"path should start with: "
+                f"{valid_path} "
+                f"but {path[:len(valid_path)]} does not match!"
             )
 
 

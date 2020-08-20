@@ -81,6 +81,7 @@ class _BrowserEventFactory(_BaseEventFactory):
             "textbook.pdf.page.scrolled",
             "textbook.pdf.zoom.buttons.changed",
             "textbook.pdf.zoom.menu.changed",
+            "textbook.pdf.display.scaled",
         ]:
             event["page"] = FAKE.random_int(0, 1000)
         if obj.name == "textbook.pdf.thumbnail.navigated":
@@ -95,7 +96,8 @@ class _BrowserEventFactory(_BaseEventFactory):
             event["direction"] = FAKE.random_element(scroll_or_zoom)
         if obj.name == "textbook.pdf.zoom.menu.changed":
             event["amaunt"] = FAKE.random_element(BROWSER_EVENT_VALID_AMAUNT)
-
+        if obj.name == "textbook.pdf.display.scaled":
+            event["amount"] = FAKE.pyfloat()
         event["chapter"] = f"/asset-v1:{course_key}+type@asset+block/{FAKE.slug()}.pdf"
         event["name"] = obj.name
         return json.dumps(event)

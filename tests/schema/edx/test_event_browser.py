@@ -715,3 +715,165 @@ def test_invalid_event_type_textbook_pdf_zoom_menu_changed(one_browser_event):
     with pytest.raises(ValidationError) as excinfo:
         one_browser_event(event_type=event_type, event=json.dumps(event))
     check_error(excinfo, "amaunt should be one of", operator.contains)
+
+
+def test_valid_event_type_textbook_pdf_display_scaled(one_browser_event):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type textbook.pdf.display.scaled
+    """
+    event = {
+        "chapter": f"/asset-v1:{COURSE_ID[10:]}+type@asset+block/test.pdf",
+        "page": 1,
+        "name": "textbook.pdf.display.scaled",
+        "amount": 1.1641304347826087,
+    }
+    try:
+        one_browser_event(event_type=event["name"], event=json.dumps(event))
+    except ValidationError:
+        pytest.fail(
+            "Valid browser event_type textbook.pdf.display.scaled "
+            "should not raise exceptions"
+        )
+
+
+def test_invalid_event_type_textbook_pdf_display_scaled(one_browser_event):
+    """Test that a invalid event value does raise a ValidationError
+    for browser event type textbook.pdf.display.scaled
+    """
+    event_type = "textbook.pdf.display.scaled"
+    event = {
+        "chapter": f"/asset-v1:{COURSE_ID[10:]}+type@asset+block/test.pdf",
+        "page": 1,
+        "name": event_type,
+    }
+    with pytest.raises(ValidationError) as excinfo:
+        one_browser_event(event_type=event_type, event=json.dumps(event))
+    check_error(excinfo, "{'amount'} key is required for event", operator.contains)
+
+    event["amount"] = "1"
+    with pytest.raises(ValidationError) as excinfo:
+        one_browser_event(event_type=event_type, event=json.dumps(event))
+    check_error(excinfo, "amount should be an integer")
+
+
+def test_valid_event_type_textbook_pdf_page_loaded(browser_events):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type textbook.pdf.page.loaded
+    """
+    pass
+
+
+def test_invalid_event_type_textbook_pdf_page_loaded(browser_events):
+    """Test that a invalid event value does raise a ValidationError
+    for browser event type textbook.pdf.page.loaded
+    """
+    pass
+
+
+# def test_event_with_event_type_book_with_textbook_pdf_page_loaded(event):
+#     """check the book browser event with and without
+#     book_event_type textbook.pdf.page.loaded"""
+#     sub_type = "book"
+#     event_without_book_event_type = browser_events(1, event_type=sub_type)
+#     event_with_book_event_type = event(
+#         1,
+#         EventType.BROWSER,
+#         event_type=sub_type,
+#         book_event_type="textbook.pdf.page.loaded",
+#     )
+#     fields = ["name", "chapter", "type", "old", "new"]
+#     for events in [event_without_book_event_type, event_with_book_event_type]:
+#         check_textbook_pdf_name_and_chapter(events, fields, "textbook.pdf.page.loaded")
+#         assert json.loads(events.iloc[0]["event"])["type"] == "gotopage"
+
+
+def test_valid_event_type_textbook_pdf_page_navigatednext(browser_events):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type textbook.pdf.page..navigatednext
+    """
+    pass
+
+
+def test_invalid_event_type_textbook_pdf_page_navigatednext(browser_events):
+    """Test that a invalid event value does raise a ValidationError
+    for browser event type textbook.pdf.page..navigatednext
+    """
+    pass
+
+
+# def test_event_with_event_type_book_with_textbook_pdf_page_navigatednext(browser_events):
+#     """check the book browser event with book_event_type
+#     textbook.pdf.page.navigatednext"""
+#     sub_type = "book"
+#     events = event(
+#         10,
+#         EventType.BROWSER,
+#         event_type=sub_type,
+#         book_event_type="textbook.pdf.page.navigatednext",
+#     )
+#     fields = ["name", "chapter", "type", "new"]
+#     check_textbook_pdf_name_and_chapter(
+#         events, fields, "textbook.pdf.page.navigatednext"
+#     )
+#     _type = events["event"].apply(
+#         lambda x: json.loads(x)["type"] in ["prevpage", "nextpage"]
+#     )
+#     assert _type.all()
+
+
+def test_valid_event_type_book_with_textbook_pdf_search(browser_events):
+    """Test that a valid event value does not raise a ValidationError
+    for browser event type book
+    """
+    pass
+
+
+def test_invalid_event_type_book_with_textbook_pdf_search(browser_events):
+    """Test that a invalid event value does raise a ValidationError
+    for browser event type book
+    """
+    pass
+
+
+# def test_event_with_event_type_book_with_textbook_pdf_search(browser_events):
+#     """check the book browser event with book_event_types:
+#     textbook.pdf.search.executed,
+#     textbook.pdf.search.highlight.toggled,
+#     textbook.pdf.search.navigatednext and
+#     textbook.pdf.searchcasesensitivity.toggled
+#     """
+#     sub_type = "book"
+#     for book_event_type in [
+#         "textbook.pdf.search.executed",
+#         "textbook.pdf.search.highlight.toggled",
+#         "textbook.pdf.search.navigatednext",
+#         "textbook.pdf.searchcasesensitivity.toggled",
+#     ]:
+#         events = browser_events(
+#             15, event_type=sub_type, book_event_type=book_event_type,
+#         )
+#         fields = [
+#             "name",
+#             "chapter",
+#             "caseSensitive",
+#             "highlightAll",
+#             "page",
+#             "query",
+#             "status",
+#         ]
+#         boolean_fields = ["caseSensitive", "highlightAll"]
+#         if book_event_type == "textbook.pdf.search.navigatednext":
+#             fields.append("findprevious")
+#             boolean_fields.append("findprevious")
+
+#         check_textbook_pdf_name_and_chapter(events, fields, book_event_type)
+#         for boolean_field in boolean_fields:
+#             field = events["event"].apply(
+#                 lambda x, b=boolean_field: json.loads(x)[b] in [True, False]
+#             )
+#             assert field.all()
+#         for emptiable_field in ["status", "query"]:
+#             field = events["event"].apply(
+#                 lambda x, e=emptiable_field: json.loads(x)[e] == ""
+#             )
+#             assert 0 < sum(field) < 15

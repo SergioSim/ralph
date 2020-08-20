@@ -278,6 +278,20 @@ class BrowserEventSchema(BaseEventSchema):
                 f"amaunt should be one of {BROWSER_EVENT_VALID_AMAUNT}"
             )
 
+    @validates_schema
+    def validate_event_textbook_pdf_display_scaled(self, data, **kwargs):
+        """Check that the event is a parsable JSON object with 4 keys:
+        `name`: string, `page`: integer > 0, `chapter`: url,
+        `amount`: interger
+        """
+        if data["name"] != "textbook.pdf.display.scaled":
+            return
+
+        event = self.validate_event_keys(data, {"chapter", "page", "name", "amount"})
+        self.check_chapter_page_name(data, event)
+        if not isinstance(event["amount"], float):
+            raise ValidationError("amount should be an integer")
+
     @validates("session")
     def validate_session(self, value):  # pylint: no-self-use
         """"Check session field empty or MD5_HASH_LEN chars long"""
