@@ -128,7 +128,7 @@ class BaseEventSchema(Schema):
     event_source = fields.Str(
         required=True,
         validate=Equal(
-            comparable="server", error='The event event_source field is not "server"'
+            comparable="server", error="The event event_source field is not `server`"
         ),
     )
     context = fields.Nested(BaseContextSchema(), required=True)

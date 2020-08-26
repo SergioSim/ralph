@@ -10,7 +10,8 @@ from ralph.schemas.edx.feedback_displayed import FeedbackDisplayedSchema
 
 from tests.fixtures.logs import EventType, _event
 
-SCHEMA = FeedbackDisplayedSchema()
+from .test_common import check_error, check_loading_valid_events
+
 BULK_EVENTS = _event(50, EventType.FEEDBACK_DISPLAYED)
 
 
@@ -23,12 +24,7 @@ def feedback_displayed():
 def test_loading_valid_events_should_not_raise_exceptions():
     """check that loading valid events does not raise exceptions
     """
-    chunks = pd.read_json("tests/data/feedback_displayed.log", lines=True)
-    try:
-        for _, chunk in chunks.iterrows():
-            SCHEMA.load(chunk.to_dict())
-    except ValidationError:
-        pytest.fail("valid feedback_displayed events should not raise exceptions")
+    check_loading_valid_events(FeedbackDisplayedSchema(), "feedback_displayed")
 
 
 def test_invalid_username_value(feedback_displayed):

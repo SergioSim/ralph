@@ -52,13 +52,13 @@ class _SaveSubmissionFactory(_BaseEventFactory):
     username = factory.Sequence(lambda n: FAKE.profile().get("username"))
     event_type = "openassessmentblock.save_submission"
     page = "x_module"
-    event = factory.Sequence(lambda n: SaveSubmissionObjFactory())
+    event = factory.Sequence(lambda n: SaveSubmissionEventObjFactory())
 
     @factory.lazy_attribute
     # pylint: disable=no-member
     def context(self):
         """Returns the context field"""
-        return _ContextFactory(path_tail="/save_submission", **self.context_args)
+        return _ContextFactory(path_tail="save_submission", **self.context_args)
 
 
 class SaveSubmissionStrFactory(JSONFactoryMixin, _SaveSubmissionFactory):

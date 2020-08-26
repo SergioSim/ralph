@@ -45,7 +45,7 @@ class SaveSubmissionSchema(BaseEventSchema):
         """the event.context.path should end with:
         "save_submission"
         """
-        valid_path = "save_submission"
+        valid_path = "/handler/save_submission"
         path = data["context"]["path"]
         path_len = len(valid_path)
         if path[-path_len:] != valid_path:
