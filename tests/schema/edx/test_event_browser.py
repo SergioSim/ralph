@@ -6,7 +6,6 @@ import operator
 import urllib.parse
 
 # pylint: disable=redefined-outer-name
-import pandas as pd
 import pytest
 from marshmallow import ValidationError
 

@@ -118,6 +118,6 @@ class FeedbackDisplayedSchema(BaseEventSchema):
     page = fields.Str(
         required=True,
         validate=Equal(
-            comparable="x_module", error='The event page field is not "x_module"'
+            comparable="x_module", error="The event page field is not `x_module`"
         ),
     )

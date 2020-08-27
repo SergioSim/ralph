@@ -13,6 +13,7 @@ from djehouty.libgelf.formatters import GELFFormatter
 from .edx.base import BaseEventObjFactory
 from .edx.browser import BrowserEventObjFactory
 from .edx.feedback_displayed import FeedbackDisplayedObjFactory
+from .edx.ora.base_ora_event import BaseOraEventObjFactory
 from .edx.ora.save_submission import SaveSubmissionObjFactory
 from .edx.server import ServerEventObjFactory
 
@@ -37,11 +38,12 @@ def gelf_logger():
 class EventType(Enum):
     """Represents a list of defined Event Types"""
 
-    BASEEVENT = BaseEventObjFactory
-    SERVER = ServerEventObjFactory
+    BASE_EVENT = BaseEventObjFactory
+    BASE_ORA_EVENT = BaseOraEventObjFactory
     BROWSER = BrowserEventObjFactory
     FEEDBACK_DISPLAYED = FeedbackDisplayedObjFactory
     SAVE_SUBMISSION = SaveSubmissionObjFactory
+    SERVER = ServerEventObjFactory
 
 
 def _event(size, event_type_enum, **kwargs):

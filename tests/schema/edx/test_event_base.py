@@ -1,5 +1,5 @@
 """
-Tests for the FeedbackDisplayed event schema
+Tests for the base event schema
 """
 # pylint: disable=redefined-outer-name
 import operator
@@ -12,13 +12,13 @@ from tests.fixtures.logs import EventType, _event
 
 from .test_common import check_error
 
-BULK_EVENTS = _event(50, EventType.BASEEVENT)
+BULK_EVENTS = _event(50, EventType.BASE_EVENT)
 
 
 @pytest.fixture()
 def base_event():
     """Returns a base event generator that generates size number of events"""
-    return lambda size=1, **kwargs: _event(size, EventType.BASEEVENT, **kwargs)
+    return lambda size=1, **kwargs: _event(size, EventType.BASE_EVENT, **kwargs)
 
 
 def test_valid_ip_should_not_raise_exception(base_event):

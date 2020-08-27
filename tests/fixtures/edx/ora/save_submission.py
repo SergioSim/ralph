@@ -11,8 +11,9 @@ from ralph.schemas.edx.ora.save_submission import (
     SaveSubmissionSchema,
 )
 
-from ..base import _BaseEventFactory, _ContextFactory
+from ..base import _ContextFactory
 from ..mixins import JSONFactoryMixin, ObjFactoryMixin
+from .base_ora_event import _BaseOraEventFactory
 
 FAKE = Faker()
 
@@ -43,15 +44,13 @@ class SaveSubmissionEventObjFactory(ObjFactoryMixin, _SaveSubmissionEventFactory
     """ Creates Deserialized model of the factory data """
 
 
-class _SaveSubmissionFactory(_BaseEventFactory):
+class _SaveSubmissionFactory(_BaseOraEventFactory):
     """Represents the openassessmentblock.save_submission event factory"""
 
     class Meta:  # pylint: disable=missing-class-docstring
         model = SaveSubmissionSchema
 
-    username = factory.Sequence(lambda n: FAKE.profile().get("username"))
     event_type = "openassessmentblock.save_submission"
-    page = "x_module"
     event = factory.Sequence(lambda n: SaveSubmissionEventObjFactory())
 
     @factory.lazy_attribute

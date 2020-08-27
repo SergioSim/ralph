@@ -2,7 +2,8 @@
 Tests for the FeedbackDisplayed event schema
 """
 # pylint: disable=redefined-outer-name
-import pandas as pd
+import operator
+
 import pytest
 from marshmallow import ValidationError
 
@@ -31,38 +32,56 @@ def test_invalid_username_value(feedback_displayed):
     """ValidationError should be raised if the username value
     is empty or less than 2 characters
     """
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         feedback_displayed(1, username="")
-    with pytest.raises(ValidationError):
+    check_error(excinfo, "Length must be between 2 and 30.")
+    with pytest.raises(ValidationError) as excinfo:
         feedback_displayed(1, username="1")
-    with pytest.raises(ValidationError):
+    check_error(excinfo, "Length must be between 2 and 30.")
+    with pytest.raises(ValidationError) as excinfo:
         feedback_displayed(1, username=1234)
-    with pytest.raises(ValidationError):
+    check_error(excinfo, "Not a valid string.")
+    with pytest.raises(ValidationError) as excinfo:
         feedback_displayed(1, username="more_than_30_characters_long_for_sure")
+    check_error(excinfo, "Length must be between 2 and 30.")
 
 
 def test_invalid_event_type_value(feedback_displayed):
     """ValidationError should be raised if the event_type value
     is not edx.problem.hint.feedback_displayed
     """
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         feedback_displayed(1, event_type="problem_check")
+    check_error(
+        excinfo,
+        "The event event_type field is not `edx.problem.hint.feedback_displayed`",
+    )
 
 
 def test_invalid_page_value(feedback_displayed):
     """ValidationError should be raised if the page value
     is not x_module
     """
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         feedback_displayed(1, page="not_x_module")
+    check_error(excinfo, "The event page field is not `x_module`")
 
 
 def test_invalid_context_org_id_value(feedback_displayed):
     """ValidationError should be raised if the org_id value
     is not contained in the course_id
     """
-    with pytest.raises(ValidationError):
-        feedback_displayed(1, org_id="org_id_not_in_course_id")
+    with pytest.raises(ValidationError) as excinfo:
+        feedback_displayed(
+            1,
+            context_args={
+                "org_id": "org_id_not_in_course_id",
+                "course_id": "course-v1:org_id+course+session",
+            },
+        )
+    check_error(
+        excinfo, "organization ID in the course ID does not match", operator.contains
+    )
 
 
 def test_invalid_context_path_value(feedback_displayed):
@@ -71,16 +90,22 @@ def test_invalid_context_path_value(feedback_displayed):
     """
     context = feedback_displayed(1).iloc[0]["context"]
     context["path"] = "{}_not_problem_check".format(context["path"])
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         feedback_displayed(1, context=context)
+    check_error(
+        excinfo,
+        "context.path should end with: xmodule_handler/problem_check",
+        operator.contains,
+    )
 
 
 def test_invalid_event_question_type_value(feedback_displayed):
     """ValidationError should be raised if the event question_type value
     is not in the premitted value range
     """
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         feedback_displayed(1, event_args={"question_type": "not_choiceresponse"})
+    check_error(excinfo, "Not allowed value")
 
 
 def test_invalid_event_with_choice_all_missing(feedback_displayed):
@@ -91,9 +116,12 @@ def test_invalid_event_with_choice_all_missing(feedback_displayed):
         0
     ]["event"]
     event["question_type"] = "choiceresponse"
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         feedback_displayed(1, event=event)
-    # when the choice_all field is present the event should be valid
+    check_error(
+        excinfo,
+        "When the question_type is `choiceresponse`, choice_all should be present",
+    )
     event["choice_all"] = ["choice_1"]
     try:
         feedback_displayed(1, event=event)
@@ -109,5 +137,9 @@ def test_invalid_event_with_choice_all_present(feedback_displayed):
         0
     ]["event"]
     event["choice_all"] = ["choice_1"]
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         feedback_displayed(1, event=event)
+    check_error(
+        excinfo,
+        "choice_all should be only present when the question_type is `choiceresponse`",
+    )
