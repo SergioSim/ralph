@@ -4,7 +4,7 @@ base event schema for ora (openassessment) events
 from marshmallow import fields
 from marshmallow.validate import Equal, Length
 
-from ..base import BaseEventSchema
+from ..base import BaseEventSchema, ContextSchema
 
 
 class BaseOraEventSchema(BaseEventSchema):
@@ -12,6 +12,7 @@ class BaseOraEventSchema(BaseEventSchema):
     ora (openassessment) events
     """
 
+    context = fields.Nested(ContextSchema(), required=True)
     username = fields.Str(required=True, validate=Length(min=2, max=30))
     page = fields.Str(
         required=True,

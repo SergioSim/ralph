@@ -14,6 +14,7 @@ from .edx.base import BaseEventObjFactory
 from .edx.browser import BrowserEventObjFactory
 from .edx.feedback_displayed import FeedbackDisplayedObjFactory
 from .edx.ora.base_ora_event import BaseOraEventObjFactory
+from .edx.ora.create_submission import CreateSubmissionObjFactory
 from .edx.ora.save_submission import SaveSubmissionObjFactory
 from .edx.server import ServerEventObjFactory
 
@@ -40,6 +41,7 @@ class EventType(Enum):
 
     BASE_EVENT = BaseEventObjFactory
     BASE_ORA_EVENT = BaseOraEventObjFactory
+    CREATE_SUBMISSION = CreateSubmissionObjFactory
     BROWSER = BrowserEventObjFactory
     FEEDBACK_DISPLAYED = FeedbackDisplayedObjFactory
     SAVE_SUBMISSION = SaveSubmissionObjFactory

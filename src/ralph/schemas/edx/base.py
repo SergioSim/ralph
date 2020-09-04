@@ -100,6 +100,8 @@ class IPv4AddressField(fields.Field):
     to a IPv4Address object.
     """
 
+    # pylint: disable=no-self-use, unused-argument
+
     def _serialize(self, value, attr, obj, **kwargs):
         if value == "":
             return ""

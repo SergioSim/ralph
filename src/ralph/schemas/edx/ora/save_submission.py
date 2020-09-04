@@ -4,9 +4,9 @@ openassessmentblock.save_submission event schema definition
 import json
 
 from marshmallow import Schema, ValidationError, fields, validates, validates_schema
-from marshmallow.validate import Equal, Length
+from marshmallow.validate import Equal
 
-from ..base import BaseEventSchema, ContextSchema
+from .base_ora_event import BaseOraEventSchema
 
 
 class SaveSubmissionEventSchema(Schema):
@@ -32,7 +32,7 @@ class SaveSubmissionEventSchema(Schema):
             raise ValidationError("saved_response.parts should be an array")
 
 
-class SaveSubmissionSchema(BaseEventSchema):
+class SaveSubmissionSchema(BaseOraEventSchema):
     """Represents the openassessmentblock.save_submission event
     This type of event is triggered after the user clicks on the
     `Save you progress` button to save the current state of a
@@ -55,7 +55,6 @@ class SaveSubmissionSchema(BaseEventSchema):
                 f"but {path[-path_len:]} does not match!"
             )
 
-    username = fields.Str(required=True, validate=Length(min=2, max=30))
     event_type = fields.Str(
         required=True,
         validate=Equal(
@@ -64,10 +63,3 @@ class SaveSubmissionSchema(BaseEventSchema):
         ),
     )
     event = fields.Nested(SaveSubmissionEventSchema(), required=True)
-    context = fields.Nested(ContextSchema(), required=True)
-    page = fields.Str(
-        required=True,
-        validate=Equal(
-            comparable="x_module", error='The event page field is not "x_module"'
-        ),
-    )

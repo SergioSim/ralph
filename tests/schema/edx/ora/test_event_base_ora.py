@@ -20,7 +20,7 @@ def test_invalid_username_value(base_ora_event):
     """
     with pytest.raises(ValidationError) as excinfo:
         base_ora_event(1, username="")
-    check_error(excinfo, "Length must be between 2 and 30.")
+    check_error(excinfo, "Length must be between 2 and 30.", error_key="username")
     with pytest.raises(ValidationError):
         base_ora_event(1, username="1")
     with pytest.raises(ValidationError):
