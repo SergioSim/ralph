@@ -13,15 +13,15 @@ class CreateSubmissionEventAnswerSchema(Schema):
     """
 
     parts = fields.List(fields.Dict(values=fields.String()), required=True)
-    file_keys = fields.List(fields.String(), required=True)
-    files_descriptions = fields.List(fields.String(), required=True)
+    file_keys = fields.List(fields.String(), required=False)
+    files_descriptions = fields.List(fields.String(), required=False)
 
     # pylint: disable=no-self-use
 
     @validates("parts")
     def validate_parts(self, value):
-        """"check parts field contains dictionaries with the key-value
-        pair: `text`: `any string`
+        """"check if parts field contains dictionaries, their key-value
+        pair is: `text`: `any string`
         """
         for obj in value:
             if set(obj.keys()) != {"text"}:

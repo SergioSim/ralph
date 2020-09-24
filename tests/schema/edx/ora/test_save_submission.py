@@ -16,7 +16,7 @@ from tests.schema.edx.test_common import check_error, check_loading_valid_events
 @pytest.fixture()
 def save_submission():
     """Returns a save_submission event generator that generates size number of events"""
-    return lambda size, **kwargs: _event(size, EventType.SAVE_SUBMISSION, **kwargs)
+    return lambda size = 1, **kwargs: _event(size, EventType.SAVE_SUBMISSION, **kwargs)
 
 
 def test_loading_valid_events_should_not_raise_exceptions():
@@ -29,7 +29,7 @@ def test_invalid_event_type_value(save_submission):
     is not openassessmentblock.save_submission
     """
     with pytest.raises(ValidationError) as excinfo:
-        save_submission(1, event_type="problem_check")
+        save_submission(event_type="problem_check")
     check_error(
         excinfo,
         "The event event_type field is not `openassessmentblock.save_submission`",
@@ -43,7 +43,7 @@ def test_invalid_context_path_value(save_submission):
     context = save_submission(1).iloc[0]["context"]
     context["path"] = "{}_not_save_submission".format(context["path"])
     with pytest.raises(ValidationError) as excinfo:
-        save_submission(1, context=context)
+        save_submission(context=context)
     check_error(
         excinfo,
         "context.path should end with: /handler/save_submission",
@@ -57,5 +57,5 @@ def test_invalid_event_value(save_submission):
     value is not a array of json objects containing the  key `text`
     """
     with pytest.raises(ValidationError) as excinfo:
-        save_submission(1, event="not a parsable json string")
+        save_submission(event="not a parsable json string")
     check_error(excinfo, "Invalid input type.")
