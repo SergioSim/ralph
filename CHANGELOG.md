@@ -10,6 +10,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add edx tracking logs (de)serializers for server events
 - Implement base CLI commands (list, extract, fetch & push) for supported
   backends
 - Support for ElasticSearch database backend

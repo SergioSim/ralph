@@ -1,0 +1,257 @@
+[
+  {
+    "__comment": "Visit a course page with user_id/org_id and empty POST/GET",
+    "version": "1.0.3",
+    "actor": {
+      "account": {
+        "name": "someUsername",
+        "homePage": "https://www.fun-mooc.fr"
+      },
+      "objectType": "Agent"
+    },
+    "verb": {
+      "id": "http://id.tincanapi.com/verb/viewed",
+      "display": {
+        "en": "viewed"
+      }
+    },
+    "object": {
+      "id": "https://www.fun-mooc.fr/courses/course-v1:organisationCourse+numeroCours+sessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/e2fa42fa1ca645389ee4618c86e982ff/",
+      "definition": {
+        "type": "http://activitystrea.ms/schema/1.0/page",
+        "name": {
+          "en": "page"
+        }
+      },
+      "objectType": "Activity"
+    },
+    "context": {
+      "platform": "https://www.fun-mooc.fr",
+      "extensions": {
+        "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
+        "https://www.fun-mooc.fr/extension/agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:75.0) Gecko/20100101 Firefox/75.0",
+        "https://www.fun-mooc.fr/extension/host": "7a4a1c08e030",
+        "https://www.fun-mooc.fr/extension/referer": "http://localhost:8072/courses/course-v1:organisationCourse+numeroCours+sessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/e2fa42fa1ca645389ee4618c86e982ff/",
+        "https://www.fun-mooc.fr/extension/accept_language": "en-US,en;q=0.5",
+        "https://www.fun-mooc.fr/extension/course_user_tags": {},
+        "https://www.fun-mooc.fr/extension/user_id": 2,
+        "https://www.fun-mooc.fr/extension/org_id": "organisationCourse",
+        "https://www.fun-mooc.fr/extension/course_id": "course-v1:organisationCourse+numeroCours+sessiondCours",
+        "https://www.fun-mooc.fr/extension/request": "{\"POST\": {}, \"GET\": {}}"
+      }
+    },
+    "timestamp": "2020-04-18T13:23:03.357329+00:00"
+  },
+  {
+    "__comment": "Render a CAPA Problem with user_id/org_id and empty POST/GET",
+    "version": "1.0.3",
+    "actor": {
+      "objectType": "Agent",
+      "account": {
+        "name": "someUsername",
+        "homePage": "https://www.fun-mooc.fr"
+      }
+    },
+    "verb": {
+      "id": "http://id.tincanapi.com/verb/viewed",
+      "display": {
+        "en": "viewed"
+      }
+    },
+    "object": {
+      "id": "https://www.fun-mooc.fr/courses/course-v1:organisationCourse+numeroCours+sessiondCours/xblock/block-v1:organisationCourse+numeroCours+sessiondCours+type@problem+block@e8bc718966e9441abc3ccf1a6429ee8b/handler/xmodule_handler/problem_get",
+      "objectType": "Activity",
+      "definition": {
+        "name": {
+          "en": "page"
+        },
+        "type": "http://activitystrea.ms/schema/1.0/page"
+      }
+    },
+    "timestamp": "2020-04-18T14:34:04.419315+00:00",
+    "context": {
+      "platform": "https://www.fun-mooc.fr",
+      "extensions": {
+        "https://www.fun-mooc.fr/extension/accept_language": "en-US,en;q=0.5",
+        "https://www.fun-mooc.fr/extension/agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:75.0) Gecko/20100101 Firefox/75.0",
+        "https://www.fun-mooc.fr/extension/course_id": "course-v1:organisationCourse+numeroCours+sessiondCours",
+        "https://www.fun-mooc.fr/extension/course_user_tags": {},
+        "https://www.fun-mooc.fr/extension/host": "7a4a1c08e030",
+        "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
+        "https://www.fun-mooc.fr/extension/org_id": "organisationCourse",
+        "https://www.fun-mooc.fr/extension/referer": "http://localhost:8072/courses/course-v1:organisationCourse+numeroCours+sessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/e2fa42fa1ca645389ee4618c86e982ff/",
+        "https://www.fun-mooc.fr/extension/user_id": 2,
+        "https://www.fun-mooc.fr/extension/request": "{\"POST\": {}, \"GET\": {}}"
+      }
+    }
+  },
+  {
+    "__comment": "Non signed-in user requests translations script",
+    "version": "1.0.3",
+    "actor": {
+      "objectType": "Agent",
+      "account": {
+        "name": "anonymous",
+        "homePage": "https://www.fun-mooc.fr"
+      }
+    },
+    "verb": {
+      "id": "http://id.tincanapi.com/verb/viewed",
+      "display": {
+        "en": "viewed"
+      }
+    },
+    "object": {
+      "id": "https://www.fun-mooc.fr/i18n.js",
+      "objectType": "Activity",
+      "definition": {
+        "name": {
+          "en": "page"
+        },
+        "type": "http://activitystrea.ms/schema/1.0/page"
+      }
+    },
+    "timestamp": "2020-04-19T09:35:50.594119+00:00",
+    "context": {
+      "platform": "https://www.fun-mooc.fr",
+      "extensions": {
+        "https://www.fun-mooc.fr/extension/accept_language": "en-US,en;q=0.5",
+        "https://www.fun-mooc.fr/extension/agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:75.0) Gecko/20100101 Firefox/75.0",
+        "https://www.fun-mooc.fr/extension/course_id": "",
+        "https://www.fun-mooc.fr/extension/course_user_tags": {},
+        "https://www.fun-mooc.fr/extension/host": "7a4a1c08e030",
+        "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
+        "https://www.fun-mooc.fr/extension/org_id": "",
+        "https://www.fun-mooc.fr/extension/referer": "http://localhost:8072/login?next=/courses/course-v1%3AorganisationCourse%2BnumeroCours%2BsessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/e2fa42fa1ca645389ee4618c86e982ff/",
+        "https://www.fun-mooc.fr/extension/request": "{\"POST\": {}, \"GET\": {}}"
+      }
+    }
+  },
+  {
+    "__comment": "Non signed-in user tries to access course page (empty username, user_id, org_id)",
+    "version": "1.0.3",
+    "actor": {
+      "objectType": "Agent",
+      "account": {
+        "name": "anonymous",
+        "homePage": "https://www.fun-mooc.fr"
+      }
+    },
+    "verb": {
+      "id": "http://id.tincanapi.com/verb/viewed",
+      "display": {
+        "en": "viewed"
+      }
+    },
+    "object": {
+      "id": "https://www.fun-mooc.fr/courses/course-v1:organisationCourse+numeroCours+sessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/a953e98cd6a94fc3a9e0c3898f8acf42/",
+      "objectType": "Activity",
+      "definition": {
+        "name": {
+          "en": "page"
+        },
+        "type": "http://activitystrea.ms/schema/1.0/page"
+      }
+    },
+    "timestamp": "2020-11-09T14:57:00.231115+00:00",
+    "context": {
+      "platform": "https://www.fun-mooc.fr",
+      "extensions": {
+        "https://www.fun-mooc.fr/extension/accept_language": "en-US,en;q=0.5",
+        "https://www.fun-mooc.fr/extension/agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:82.0) Gecko/20100101 Firefox/82.0",
+        "https://www.fun-mooc.fr/extension/course_id": "course-v1:organisationCourse+numeroCours+sessiondCours",
+        "https://www.fun-mooc.fr/extension/course_user_tags": {},
+        "https://www.fun-mooc.fr/extension/host": "9ae7771bd190",
+        "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
+        "https://www.fun-mooc.fr/extension/org_id": "organisationCourse",
+        "https://www.fun-mooc.fr/extension/referer": "",
+        "https://www.fun-mooc.fr/extension/request": "{\"POST\": {}, \"GET\": {}}"
+      }
+    }
+  },
+  {
+    "__comment": "User submits a problem response - filled POST request",
+    "version": "1.0.3",
+    "actor": {
+      "objectType": "Agent",
+      "account": {
+        "name": "someUsername",
+        "homePage": "https://www.fun-mooc.fr"
+      }
+    },
+    "verb": {
+      "id": "http://id.tincanapi.com/verb/viewed",
+      "display": {
+        "en": "viewed"
+      }
+    },
+    "object": {
+      "id": "https://www.fun-mooc.fr/courses/course-v1:organisationCourse+numeroCours+sessiondCours/xblock/block-v1:organisationCourse+numeroCours+sessiondCours+type@problem+block@d9fd0115d0be4fe08281f2eaf361744c/handler/xmodule_handler/problem_check",
+      "objectType": "Activity",
+      "definition": {
+        "name": {
+          "en": "page"
+        },
+        "type": "http://activitystrea.ms/schema/1.0/page"
+      }
+    },
+    "timestamp": "2020-04-19T09:45:42.961458+00:00",
+    "context": {
+      "platform": "https://www.fun-mooc.fr",
+      "extensions": {
+        "https://www.fun-mooc.fr/extension/accept_language": "en-US,en;q=0.5",
+        "https://www.fun-mooc.fr/extension/agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:75.0) Gecko/20100101 Firefox/75.0",
+        "https://www.fun-mooc.fr/extension/course_id": "course-v1:organisationCourse+numeroCours+sessiondCours",
+        "https://www.fun-mooc.fr/extension/course_user_tags": {},
+        "https://www.fun-mooc.fr/extension/host": "7a4a1c08e030",
+        "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
+        "https://www.fun-mooc.fr/extension/org_id": "organisationCourse",
+        "https://www.fun-mooc.fr/extension/referer": "http://localhost:8072/courses/course-v1:organisationCourse+numeroCours+sessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/e2fa42fa1ca645389ee4618c86e982ff/",
+        "https://www.fun-mooc.fr/extension/user_id": 2,
+        "https://www.fun-mooc.fr/extension/request": "{\"POST\": {\"input_d9fd0115d0be4fe08281f2eaf361744c_2_1\": [\"China\"]}, \"GET\": {}}"
+      }
+    }
+  },
+  {
+    "__comment": "Not signed-in user visit root page '/' (empty username, user_id, org_id, course_id)",
+    "version": "1.0.3",
+    "actor": {
+      "objectType": "Agent",
+      "account": {
+        "name": "anonymous",
+        "homePage": "https://www.fun-mooc.fr"
+      }
+    },
+    "verb": {
+      "id": "http://id.tincanapi.com/verb/viewed",
+      "display": {
+        "en": "viewed"
+      }
+    },
+    "object": {
+      "id": "https://www.fun-mooc.fr/",
+      "objectType": "Activity",
+      "definition": {
+        "name": {
+          "en": "page"
+        },
+        "type": "http://activitystrea.ms/schema/1.0/page"
+      }
+    },
+    "timestamp": "2020-04-20T09:44:18.884213+00:00",
+    "context": {
+      "platform": "https://www.fun-mooc.fr",
+      "extensions": {
+        "https://www.fun-mooc.fr/extension/accept_language": "en-US,en;q=0.5",
+        "https://www.fun-mooc.fr/extension/agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:75.0) Gecko/20100101 Firefox/75.0",
+        "https://www.fun-mooc.fr/extension/course_id": "",
+        "https://www.fun-mooc.fr/extension/course_user_tags": {},
+        "https://www.fun-mooc.fr/extension/host": "7a4a1c08e030",
+        "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
+        "https://www.fun-mooc.fr/extension/org_id": "",
+        "https://www.fun-mooc.fr/extension/referer": "",
+        "https://www.fun-mooc.fr/extension/request": "{\"POST\": {}, \"GET\": {}}"
+      }
+    }
+  }
+]

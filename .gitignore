@@ -46,6 +46,3 @@ venv.bak/
 .coverage
 .pylint.d
 .pytest_cache
-
-# Test fixtures
-data/

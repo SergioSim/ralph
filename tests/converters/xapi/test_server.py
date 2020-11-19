@@ -1,0 +1,29 @@
+"""Tests for the server event xapi converter"""
+
+import pandas as pd
+import pytest
+from marshmallow import ValidationError
+
+from ralph.converters.xapi.server import ServerXapiConverter
+
+SCHEMA = ServerXapiConverter()
+
+
+def test_valid_server_events_should_match_expected_xapi_statements():
+    """Test the xapi conversion of server events defined in the data directory"""
+
+    event_name = "server_event"
+    current_path = f"tests/data/current_edx_events/{event_name}.json"
+    expected_path = f"tests/data/expected_xapi_statements/{event_name}.json"
+    edx = pd.read_json(current_path, dtype=False, convert_dates=False)
+    xapi = pd.read_json(expected_path, dtype=False, convert_dates=False)
+    try:
+        for i, event in edx.iterrows():
+            event_dict = event.to_dict()
+            expected_xapi_statement = xapi.iloc[i].to_dict()
+            event_dict.pop("__comment", None)
+            expected_xapi_statement.pop("__comment", None)
+            converted_xapi_statement = SCHEMA.dump(SCHEMA.load(event_dict))
+            assert converted_xapi_statement == expected_xapi_statement
+    except ValidationError:
+        pytest.fail("Valid server events should not raise exceptions")
