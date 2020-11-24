@@ -36,6 +36,7 @@
         "https://www.fun-mooc.fr/extension/course_user_tags": {},
         "https://www.fun-mooc.fr/extension/user_id": 2,
         "https://www.fun-mooc.fr/extension/org_id": "organisationCourse",
+        "https://www.fun-mooc.fr/extension/path": "/courses/course-v1:organisationCourse+numeroCours+sessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/e2fa42fa1ca645389ee4618c86e982ff/",
         "https://www.fun-mooc.fr/extension/course_id": "course-v1:organisationCourse+numeroCours+sessiondCours",
         "https://www.fun-mooc.fr/extension/request": "{\"POST\": {}, \"GET\": {}}"
       }
@@ -79,6 +80,7 @@
         "https://www.fun-mooc.fr/extension/host": "7a4a1c08e030",
         "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
         "https://www.fun-mooc.fr/extension/org_id": "organisationCourse",
+        "https://www.fun-mooc.fr/extension/path": "/courses/course-v1:organisationCourse+numeroCours+sessiondCours/xblock/block-v1:organisationCourse+numeroCours+sessiondCours+type@problem+block@e8bc718966e9441abc3ccf1a6429ee8b/handler/xmodule_handler/problem_get",
         "https://www.fun-mooc.fr/extension/referer": "http://localhost:8072/courses/course-v1:organisationCourse+numeroCours+sessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/e2fa42fa1ca645389ee4618c86e982ff/",
         "https://www.fun-mooc.fr/extension/user_id": 2,
         "https://www.fun-mooc.fr/extension/request": "{\"POST\": {}, \"GET\": {}}"
@@ -122,6 +124,7 @@
         "https://www.fun-mooc.fr/extension/host": "7a4a1c08e030",
         "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
         "https://www.fun-mooc.fr/extension/org_id": "",
+        "https://www.fun-mooc.fr/extension/path": "/i18n.js",
         "https://www.fun-mooc.fr/extension/referer": "http://localhost:8072/login?next=/courses/course-v1%3AorganisationCourse%2BnumeroCours%2BsessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/e2fa42fa1ca645389ee4618c86e982ff/",
         "https://www.fun-mooc.fr/extension/request": "{\"POST\": {}, \"GET\": {}}"
       }
@@ -164,6 +167,7 @@
         "https://www.fun-mooc.fr/extension/host": "9ae7771bd190",
         "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
         "https://www.fun-mooc.fr/extension/org_id": "organisationCourse",
+        "https://www.fun-mooc.fr/extension/path": "/courses/course-v1:organisationCourse+numeroCours+sessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/a953e98cd6a94fc3a9e0c3898f8acf42/",
         "https://www.fun-mooc.fr/extension/referer": "",
         "https://www.fun-mooc.fr/extension/request": "{\"POST\": {}, \"GET\": {}}"
       }
@@ -206,6 +210,7 @@
         "https://www.fun-mooc.fr/extension/host": "7a4a1c08e030",
         "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
         "https://www.fun-mooc.fr/extension/org_id": "organisationCourse",
+        "https://www.fun-mooc.fr/extension/path": "/courses/course-v1:organisationCourse+numeroCours+sessiondCours/xblock/block-v1:organisationCourse+numeroCours+sessiondCours+type@problem+block@d9fd0115d0be4fe08281f2eaf361744c/handler/xmodule_handler/problem_check",
         "https://www.fun-mooc.fr/extension/referer": "http://localhost:8072/courses/course-v1:organisationCourse+numeroCours+sessiondCours/courseware/b5722732abed4eb7ba823f0b4239d50d/e2fa42fa1ca645389ee4618c86e982ff/",
         "https://www.fun-mooc.fr/extension/user_id": 2,
         "https://www.fun-mooc.fr/extension/request": "{\"POST\": {\"input_d9fd0115d0be4fe08281f2eaf361744c_2_1\": [\"China\"]}, \"GET\": {}}"
@@ -249,6 +254,7 @@
         "https://www.fun-mooc.fr/extension/host": "7a4a1c08e030",
         "https://www.fun-mooc.fr/extension/ip": "172.20.0.1",
         "https://www.fun-mooc.fr/extension/org_id": "",
+        "https://www.fun-mooc.fr/extension/path": "/",
         "https://www.fun-mooc.fr/extension/referer": "",
         "https://www.fun-mooc.fr/extension/request": "{\"POST\": {}, \"GET\": {}}"
       }

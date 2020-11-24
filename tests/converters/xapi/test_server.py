@@ -5,8 +5,10 @@ import pytest
 from marshmallow import ValidationError
 
 from ralph.converters.xapi.server import ServerXapiConverter
+from ralph.schemas.edx.server import ServerEventSchema
 
-SCHEMA = ServerXapiConverter()
+SCHEMA = ServerEventSchema()
+CONVERTER = ServerXapiConverter()
 
 
 def test_valid_server_events_should_match_expected_xapi_statements():
@@ -23,7 +25,8 @@ def test_valid_server_events_should_match_expected_xapi_statements():
             expected_xapi_statement = xapi.iloc[i].to_dict()
             event_dict.pop("__comment", None)
             expected_xapi_statement.pop("__comment", None)
-            converted_xapi_statement = SCHEMA.dump(SCHEMA.load(event_dict))
+            SCHEMA.load(event_dict)
+            converted_xapi_statement = CONVERTER.convert(event_dict)
             assert converted_xapi_statement == expected_xapi_statement
     except ValidationError:
         pytest.fail("Valid server events should not raise exceptions")

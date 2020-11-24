@@ -17,6 +17,7 @@ XAPI_EXTENSION_COURSE_USER_TAGS = "https://www.fun-mooc.fr/extension/course_user
 XAPI_EXTENSION_HOST = "https://www.fun-mooc.fr/extension/host"
 XAPI_EXTENSION_IP = "https://www.fun-mooc.fr/extension/ip"
 XAPI_EXTENSION_ORG_ID = "https://www.fun-mooc.fr/extension/org_id"
+XAPI_EXTENSION_PATH = "https://www.fun-mooc.fr/extension/path"
 XAPI_EXTENSION_REFERER = "https://www.fun-mooc.fr/extension/referer"
 XAPI_EXTENSION_USER_ID = "https://www.fun-mooc.fr/extension/user_id"
 XAPI_EXTENSION_REQUEST = "https://www.fun-mooc.fr/extension/request"

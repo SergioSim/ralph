@@ -1,7 +1,8 @@
 """Server event xAPI Converter"""
 
-from tincan import Activity, ActivityDefinition, LanguageMap
+from tincan import Activity, ActivityDefinition, LanguageMap, Verb
 
+from ralph.converters.base_converter import GoTo
 from ralph.schemas.edx.server import ServerEventSchema
 
 from .base import BaseXapiConverter
@@ -16,27 +17,35 @@ from .constants import (
 )
 
 
-class ServerXapiConverter(ServerEventSchema, BaseXapiConverter):
+class ServerXapiConverter(BaseXapiConverter):
     """Converts a common edx server event to xAPI
     See ServerEventSchema for info about the Edx server event
     Example Statement: John viewed https://www.fun-mooc.fr/ Web page
     """
 
-    def get_verb_kwargs(self):  # pylint: disable=no-self-use
-        """Returns tincan.Verb kwargs for the xapi_event"""
+    _schema = ServerEventSchema()
 
-        return {"id": XAPI_VERB_VIEWED, "display": LanguageMap({EN: VIEWED})}
+    # pylint: disable=unnecessary-lambda
+    event_type = GoTo(
+        ["object"], lambda event_type: ServerXapiConverter.get_object(event_type)
+    )
+    event = GoTo(["context", "extensions", XAPI_EXTENSION_REQUEST])
 
-    def get_object(self):
+    @staticmethod
+    def get_object(event_type):
         """Returns the object property to the xapi_event"""
 
         definition = ActivityDefinition(
             type=XAPI_ACTIVITY_PAGE, name=LanguageMap({EN: PAGE})
         )
-        viewed_page = HOME_PAGE + self.edx_event["event_type"]
+        viewed_page = HOME_PAGE + event_type
         return Activity(id=viewed_page, definition=definition)
 
-    def update_extensions(self):
-        """Add request extension to context extensions"""
+    @staticmethod
+    def independent_fields():
+        """Declare fields that stand on their own"""
 
-        return {XAPI_EXTENSION_REQUEST: self.edx_event["event"]}
+        fields = BaseXapiConverter.independent_fields()
+        return fields + [
+            GoTo(["verb"], Verb(id=XAPI_VERB_VIEWED, display=LanguageMap({EN: VIEWED})))
+        ]
