@@ -10,6 +10,7 @@ import click_log
 from click_option_group import optgroup
 
 from ralph.backends import BackendTypes
+from ralph.converters.xapi_converter import XapiConverter
 from ralph.defaults import (
     DEFAULT_BACKEND_CHUNCK_SIZE,
     DEFAULT_GELF_PARSER_CHUNCK_SIZE,
@@ -81,7 +82,7 @@ def backends_options(name=None, backends=None):
     return wrapper
 
 
-@cli.command()
+@cli.group(chain=True, invoke_without_command=True)
 @click.option(
     "-p",
     "--parser",
@@ -103,10 +104,36 @@ def extract(parser, chunksize):
         "Extracting events using the %s parser (chunk size: %d)", parser, chunksize
     )
 
-    parser = get_class_from_name(parser, PARSERS)()
 
-    for event in parser.parse(sys.stdin, chunksize=chunksize):
-        click.echo(event)
+@extract.resultcallback()
+def extract_pipeline(processors, parser, chunksize):
+    """Read events from standart input, parse them with parser and apply processors"""
+
+    parser = get_class_from_name(parser, PARSERS)()
+    iterator = parser.parse(sys.stdin, chunksize=chunksize)
+    for processor in processors:
+        iterator = processor(iterator)
+    for event in iterator:
+        if event:
+            click.echo(event)
+
+
+@extract.command()
+@click.option(
+    "-p",
+    "--platform",
+    type=str,
+    required=True,
+    help="The platform (hostname) to use in the xApi statements",
+)
+def to_xapi(platform):
+    """Convert extracted events to xApi"""
+
+    def processor(iterator):
+        for line in iterator:
+            yield XapiConverter(line, platform).convert()
+
+    return processor
 
 
 @click.argument("archive", required=False)

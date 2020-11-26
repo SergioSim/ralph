@@ -1,15 +1,18 @@
 """Tests for the base xapi converter"""
 
+import json
+
 import pytest
 
 from ralph.converters.xapi.base import BaseXapiConverter
-from ralph.converters.xapi.constants import HOME_PAGE
 from ralph.schemas.edx.base import BaseEventSchema
 
 from tests.fixtures.logs import EventType
 
 SCHEMA = BaseEventSchema()
 CONVERTER = BaseXapiConverter()
+PLATFORM = "https://www.fun-mooc.fr"
+BaseXapiConverter._platform = PLATFORM  # pylint: disable=protected-access
 
 
 @pytest.mark.parametrize("user_id", [None, "", 123])
@@ -21,13 +24,13 @@ def test_base_xapi_converter_returns_actor_timestamp_and_context(
 
     event_args = {"username": username, "context_args": {"user_id": user_id}}
     base_event = event(1, EventType.BASE_EVENT, **event_args).iloc[0].to_dict()
-    # validate base event
-    SCHEMA.load(base_event)
-    # convert base_event
-    xapi_event = CONVERTER.convert(base_event)
+    base_event_str = json.dumps(base_event)
+    # convert base_event_str
+    xapi_event_str = CONVERTER.convert(base_event_str)
+    xapi_event = json.loads(xapi_event_str)
     assert xapi_event["actor"]["objectType"] == "Agent"
     assert xapi_event["actor"]["account"]["name"] == actor_name
-    assert xapi_event["actor"]["account"]["homePage"] == HOME_PAGE
+    assert xapi_event["actor"]["account"]["homePage"] == PLATFORM
     assert xapi_event["timestamp"] == base_event["time"]
     course_user_tags = base_event["context"].get("course_user_tags", {})
     user_id_extension = {}
@@ -50,5 +53,5 @@ def test_base_xapi_converter_returns_actor_timestamp_and_context(
             "https://www.fun-mooc.fr/extension/referer": base_event["referer"],
             **user_id_extension,
         },
-        "platform": HOME_PAGE,
+        "platform": PLATFORM,
     }

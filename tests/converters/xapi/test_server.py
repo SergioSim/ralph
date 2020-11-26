@@ -1,14 +1,19 @@
 """Tests for the server event xapi converter"""
 
+import json
+
 import pandas as pd
 import pytest
 from marshmallow import ValidationError
 
+from ralph.converters.xapi.base import BaseXapiConverter
 from ralph.converters.xapi.server import ServerXapiConverter
 from ralph.schemas.edx.server import ServerEventSchema
 
 SCHEMA = ServerEventSchema()
 CONVERTER = ServerXapiConverter()
+PLATFORM = "https://www.fun-mooc.fr"
+BaseXapiConverter._platform = PLATFORM  # pylint: disable=protected-access
 
 
 def test_valid_server_events_should_match_expected_xapi_statements():
@@ -25,8 +30,9 @@ def test_valid_server_events_should_match_expected_xapi_statements():
             expected_xapi_statement = xapi.iloc[i].to_dict()
             event_dict.pop("__comment", None)
             expected_xapi_statement.pop("__comment", None)
-            SCHEMA.load(event_dict)
-            converted_xapi_statement = CONVERTER.convert(event_dict)
-            assert converted_xapi_statement == expected_xapi_statement
+            event_str = json.dumps(event_dict)
+            converted_xapi_statement = CONVERTER.convert(event_str)
+            converted_xapi_statement_dict = json.loads(converted_xapi_statement)
+            assert converted_xapi_statement_dict == expected_xapi_statement
     except ValidationError:
         pytest.fail("Valid server events should not raise exceptions")

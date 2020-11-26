@@ -8,7 +8,6 @@ from ralph.schemas.edx.server import ServerEventSchema
 from .base import BaseXapiConverter
 from .constants import (
     EN,
-    HOME_PAGE,
     PAGE,
     VIEWED,
     XAPI_ACTIVITY_PAGE,
@@ -38,7 +37,7 @@ class ServerXapiConverter(BaseXapiConverter):
         definition = ActivityDefinition(
             type=XAPI_ACTIVITY_PAGE, name=LanguageMap({EN: PAGE})
         )
-        viewed_page = HOME_PAGE + event_type
+        viewed_page = BaseXapiConverter._platform + event_type
         return Activity(id=viewed_page, definition=definition)
 
     @staticmethod

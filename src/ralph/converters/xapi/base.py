@@ -1,7 +1,5 @@
 """Base Xapi Converter"""
 
-import json
-
 from tincan import Agent, Statement
 from tincan.agent_account import AgentAccount
 
@@ -14,7 +12,6 @@ from ralph.schemas.edx.base import (
 )
 
 from .constants import (
-    HOME_PAGE,
     XAPI_EXTENSION_ACCEPT_LANGUAGE,
     XAPI_EXTENSION_AGENT,
     XAPI_EXTENSION_COURSE_ID,
@@ -66,10 +63,14 @@ class BaseXapiConverter(BaseConverter):
     """Base Xapi Converter"""
 
     _schema = BaseEventSchema()
+    _platform = ""
 
     # pylint: disable=unnecessary-lambda
     username = GoTo(["actor"], lambda username: BaseXapiConverter.get_actor(username))
-    ip = GoTo(["context", "extensions", XAPI_EXTENSION_IP])
+    ip = GoTo(
+        ["context", "extensions", XAPI_EXTENSION_IP],
+        lambda ip: "" if not ip else ip.exploded,
+    )
     agent = GoTo(["context", "extensions", XAPI_EXTENSION_AGENT])
     host = GoTo(["context", "extensions", XAPI_EXTENSION_HOST])
     referer = GoTo(["context", "extensions", XAPI_EXTENSION_REFERER])
@@ -80,20 +81,30 @@ class BaseXapiConverter(BaseConverter):
     page = GoTo(None)
 
     def convert(self, event):
-        """Returns the event converted to xAPI"""
+        """Validates and returns the converted event
+
+        Args:
+            event (str or dict): event to convert, (when event is a dict we skip validation)
+
+        Returns:
+            None if validation fails, else the converted xApi statement str
+
+        """
 
         xapi = super().convert(event)
+        if not xapi:
+            return None
         for go_to in self.independent_fields():
             go_to_path = go_to.path(None, event)
             if go_to_path:
                 nested_set(xapi, go_to_path, go_to.value(None, event))
-        return json.loads(Statement(**xapi).to_json())
+        return Statement(**xapi).to_json()
 
     @staticmethod
     def independent_fields():
         """Declare fields that stand on their own"""
 
-        return [GoTo(["context", "platform"], HOME_PAGE)]
+        return [GoTo(["context", "platform"], BaseXapiConverter._platform)]
 
     @staticmethod
     def get_actor(name):
@@ -101,5 +112,5 @@ class BaseXapiConverter(BaseConverter):
 
         if not name:
             name = "anonymous"
-        account = AgentAccount(name=name, home_page=HOME_PAGE)
+        account = AgentAccount(name=name, home_page=BaseXapiConverter._platform)
         return Agent(account=account)

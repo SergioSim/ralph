@@ -25,6 +25,3 @@ XAPI_EXTENSION_REQUEST = "https://www.fun-mooc.fr/extension/request"
 # Display Names
 VIEWED = "viewed"
 PAGE = "page"
-
-# Other
-HOME_PAGE = "https://www.fun-mooc.fr"

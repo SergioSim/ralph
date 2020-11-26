@@ -1,9 +1,13 @@
 """Converter Base Class"""
 
+import logging
 from dataclasses import dataclass
 from typing import Callable, List, Union
 
-from marshmallow import Schema
+from marshmallow import Schema, ValidationError
+
+# xapi module logger
+logger = logging.getLogger(__name__)
 
 
 def nested_get(dictionary, keys):
@@ -87,8 +91,24 @@ class BaseConverter:
     _schema = Schema()
 
     def convert(self, event):
-        """Returns the converted event"""
-        return self._convert(self, event, {}, [])
+        """Validates and returns the converted event
+
+        Args:
+            event (str or dict): event to convert (when event is a dict we skip validation)
+
+        Returns:
+            None if validation fails, else the converted event dict
+
+        """
+        if isinstance(event, dict):
+            return self._convert(self, event, {}, [])
+        try:
+            event_dict = self._schema.loads(event)
+        except ValidationError as err:
+            logger.info("Invalid event!")
+            logger.debug("Error: %s \nFor Event %s", err, event)
+            return None
+        return self._convert(self, event_dict, {}, [])
 
     @staticmethod
     def _convert(converter, event, result, path):
