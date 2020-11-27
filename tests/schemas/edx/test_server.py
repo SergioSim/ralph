@@ -7,7 +7,7 @@ from marshmallow import ValidationError
 
 from ralph.schemas.edx.server import ServerEventSchema
 
-from tests.fixtures.logs import EventType, _event
+from tests.fixtures.logs import EventType, event_generator
 
 from .test_common import check_error, check_loading_valid_events
 
@@ -15,7 +15,7 @@ from .test_common import check_error, check_loading_valid_events
 @pytest.fixture()
 def server_event():
     """Return a server event generator that generates size number of events"""
-    return lambda size=1, **kwargs: _event(size, EventType.SERVER, **kwargs)
+    return lambda size=1, **kwargs: event_generator(size, EventType.SERVER, **kwargs)
 
 
 def test_loading_valid_events_should_not_raise_exceptions():

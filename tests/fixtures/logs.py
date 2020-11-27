@@ -20,7 +20,7 @@ class EventType(Enum):
     SERVER = ServerEventFactory
 
 
-def _event(size, event_type_enum, **kwargs):
+def event_generator(size, event_type_enum, **kwargs):
     """Generate `size` number of events of type `event_type`
 
     Args:
@@ -41,7 +41,7 @@ def event():
     of the given event_type.
     """
 
-    return _event
+    return event_generator
 
 
 @pytest.fixture
