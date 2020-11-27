@@ -43,13 +43,13 @@ class BaseContextFactory(BaseFactory):
 
     @factory.sequence
     def user_id(number):
-        """Returns the user_id which can be a number, empty or None"""
+        """Return the user_id which can be a number, empty or None"""
 
         return FAKE.random_element(elements=(FAKE.random_int(), "", None))
 
     @factory.sequence
     def org_id(number):
-        """Returns the org_id which depends on course_user_tags"""
+        """Return the org_id which depends on course_user_tags"""
 
         if "course_user_tags" in BaseContextFactory._meta.exclude:
             return ""
@@ -57,7 +57,7 @@ class BaseContextFactory(BaseFactory):
 
     @factory.lazy_attribute
     def course_id(self):
-        """Returns the course_id which contains org_id"""
+        """Return the course_id which contains org_id"""
 
         if self.org_id == "":
             return ""
@@ -75,7 +75,7 @@ class ContextModuleFactory(BaseFactory):
 
     @factory.lazy_attribute
     def usage_key(self):
-        """Returns the usage key which depends on the course_id"""
+        """Return the usage key which depends on the course_id"""
 
         block_id = FAKE.md5(raw_output=False)
         # pylint: disable=no-member
@@ -104,7 +104,7 @@ class ContextFactory(BaseContextFactory):
 
     @factory.lazy_attribute
     def path(self):
-        """Returns the path field which depends on the context module"""
+        """Return the path field which depends on the context module"""
 
         usage_key = self.module["usage_key"][-32:]
         return (
@@ -125,7 +125,7 @@ class BaseEventFactory(BaseFactory):
 
     @factory.sequence
     def username(number):
-        """Returns the user name which may me empty"""
+        """Return the user name which may me empty"""
 
         if FAKE.boolean():
             return ""
@@ -142,7 +142,7 @@ class BaseEventFactory(BaseFactory):
 
     @factory.lazy_attribute
     def context(self):
-        """Returns the context field"""
+        """Return the context field"""
 
         exclude_course_user_tags = FAKE.boolean()
         if "course_user_tags" in self.context_args:

@@ -32,7 +32,7 @@ class ServerXapiConverter(BaseXapiConverter):
 
     @staticmethod
     def get_object(event_type):
-        """Returns the object property to the xapi_event"""
+        """Return the xAPI object property"""
 
         definition = ActivityDefinition(
             type=XAPI_ACTIVITY_PAGE, name=LanguageMap({EN: PAGE})

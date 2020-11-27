@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def nested_get(dictionary, keys):
-    """Returns the nested value by keys array"""
+    """Return the nested value by keys array"""
     if not keys:
         return None
     for key in keys[:-1]:
@@ -64,16 +64,16 @@ class GoTo:
     _value: Union[int, str, list, dict, Callable, Link] = lambda x: x
 
     def path(self, field, event):
-        """Returns the destination path of the field"""
+        """Return the destination path of the field"""
         return self._get(self._path, field, event)
 
     def value(self, field, event):
-        """Returns the new value of the field"""
+        """Return the value of the field"""
         return self._get(self._value, field, event)
 
     @staticmethod
     def _get(value, field, event):
-        """Calls transformation function (if defined) and returns the new transformed value"""
+        """Call transformation function (if defined) and return the (transformed) value"""
         if isinstance(value, Link):
             return value.get(field, event)
         if callable(value):
@@ -84,7 +84,7 @@ class GoTo:
 class BaseConverter:
     """Converter Base Class
 
-    Converters define for each field present in their _schmema a GoTo mapping
+    Converters define for each field present in their _schema a GoTo mapping
     which express the destination(s) path(s) and transformation(s) to apply to the field
     """
 
@@ -94,21 +94,19 @@ class BaseConverter:
         """Validates and returns the converted event
 
         Args:
-            event (str or dict): event to convert (when event is a dict we skip validation)
+            event (dict): event to validate and convert
 
         Returns:
-            None if validation fails, else the converted event dict
+            None if validation fails, else the converted event (dict)
 
         """
-        if isinstance(event, dict):
-            return self._convert(self, event, {}, [])
         try:
-            event_dict = self._schema.loads(event)
+            validated_event = self._schema.load(event)
         except ValidationError as err:
             logger.info("Invalid event!")
             logger.debug("Error: %s \nFor Event %s", err, event)
             return None
-        return self._convert(self, event_dict, {}, [])
+        return self._convert(self, validated_event, {}, [])
 
     @staticmethod
     def _convert(converter, event, result, path):

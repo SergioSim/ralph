@@ -84,10 +84,10 @@ class BaseXapiConverter(BaseConverter):
         """Validates and returns the converted event
 
         Args:
-            event (str or dict): event to convert, (when event is a dict we skip validation)
+            event (dict): event to validate and convert
 
         Returns:
-            None if validation fails, else the converted xApi statement str
+            None if validation fails, else the converted xApi statement (str)
 
         """
 
@@ -108,7 +108,7 @@ class BaseXapiConverter(BaseConverter):
 
     @staticmethod
     def get_actor(name):
-        """Returns the actor property to xapi_props"""
+        """Return the xAPI actor property"""
 
         if not name:
             name = "anonymous"

@@ -14,7 +14,7 @@ from .test_common import check_error, check_loading_valid_events
 
 @pytest.fixture()
 def server_event():
-    """Returns a server event generator that generates size number of events"""
+    """Return a server event generator that generates size number of events"""
     return lambda size=1, **kwargs: _event(size, EventType.SERVER, **kwargs)
 
 

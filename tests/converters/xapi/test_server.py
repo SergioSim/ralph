@@ -10,6 +10,8 @@ from ralph.converters.xapi.base import BaseXapiConverter
 from ralph.converters.xapi.server import ServerXapiConverter
 from ralph.schemas.edx.server import ServerEventSchema
 
+from tests.fixtures.logs import EventType
+
 SCHEMA = ServerEventSchema()
 CONVERTER = ServerXapiConverter()
 PLATFORM = "https://www.fun-mooc.fr"
@@ -30,9 +32,16 @@ def test_valid_server_events_should_match_expected_xapi_statements():
             expected_xapi_statement = xapi.iloc[i].to_dict()
             event_dict.pop("__comment", None)
             expected_xapi_statement.pop("__comment", None)
-            event_str = json.dumps(event_dict)
-            converted_xapi_statement = CONVERTER.convert(event_str)
+            converted_xapi_statement = CONVERTER.convert(event_dict)
             converted_xapi_statement_dict = json.loads(converted_xapi_statement)
             assert converted_xapi_statement_dict == expected_xapi_statement
     except ValidationError:
         pytest.fail("Valid server events should not raise exceptions")
+
+
+def test_converting_invalid_server_event_should_return_none(event):
+    """The converter should return None for invalid events"""
+
+    server_event = event(1, EventType.SERVER).iloc[0]
+    server_event["username"] = "This user name is more than 32 chars long!"
+    assert CONVERTER.convert(server_event) is None

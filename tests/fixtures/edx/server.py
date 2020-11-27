@@ -23,13 +23,13 @@ class ServerEventFactory(BaseEventFactory):
 
     @factory.lazy_attribute
     def event_type(self):
-        """Returns the event_type which is equal to the path"""
+        """Return the event_type which is equal to the path"""
 
         return self.context["path"]
 
     @factory.sequence
     def event(number):
-        """Returns randomly empty/filled POST/GET value"""
+        """Return a randomly empty/filled POST/GET value"""
 
         empty = '{"POST": {}, "GET": {}}'
         post = (

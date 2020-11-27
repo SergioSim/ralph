@@ -21,7 +21,7 @@ SCHEMA = BaseEventSchema()
 
 @pytest.fixture()
 def base_event():
-    """Returns a base event generator that generates size number of events"""
+    """Return a base event generator that generates size number of events"""
     return lambda size=1, **kwargs: _event(size, EventType.BASE_EVENT, **kwargs)
 
 

@@ -10,7 +10,7 @@ import click_log
 from click_option_group import optgroup
 
 from ralph.backends import BackendTypes
-from ralph.converters.xapi_converter import XapiConverter
+from ralph.converters.xapi_converter_selector import XapiConverterSelector
 from ralph.defaults import (
     DEFAULT_BACKEND_CHUNCK_SIZE,
     DEFAULT_GELF_PARSER_CHUNCK_SIZE,
@@ -131,7 +131,7 @@ def to_xapi(platform):
 
     def processor(iterator):
         for line in iterator:
-            yield XapiConverter(line, platform).convert()
+            yield XapiConverterSelector(line, platform).convert()
 
     return processor
 

@@ -12,6 +12,8 @@ from ralph.converters.base_converter import (
 )
 from ralph.schemas.edx.base import ContextModuleSchema, ContextSchema
 
+from tests.fixtures.logs import EventType
+
 DICTIONNARY = {"foo": {"bar": "baz"}, "qux": "qux_value", "quux": "quux"}
 
 
@@ -125,82 +127,84 @@ def test_go_to(path_field, path, expected_path, value_field, value_arg, expected
 def test_convert_without_nesting():
     """Check the convert function for a schmea without nested fields"""
     converter = BaseConverter()
-    assert converter.convert(DICTIONNARY) == {}
+    assert converter.convert({}) == {}
 
     converter._schema = ContextModuleSchema()  # pylint: disable=protected-access
+    context_module = {}
+
+    # When the event dict (context_module) is not valid (raises ValidationError) we return None
+    assert converter.convert(context_module) is None
+    context_module["display_name"] = "display_name_value"
+    assert converter.convert(context_module) is None
+
     # When the _schema contains more fields than we have defined, Attribute error is raised
+    context_module[
+        "usage_key"
+    ] = "usage_key_value"  # Now context_module is a valid event
     with pytest.raises(
         AttributeError,
         match="'BaseConverter' object has no attribute '(display_name|usage_key)'",
     ):
-        assert converter.convert(DICTIONNARY) == {}
+        converter.convert(context_module)
 
     converter.display_name = GoTo(["foo"])
     # Now only usage_key is missing
     with pytest.raises(
         AttributeError, match="'BaseConverter' object has no attribute 'usage_key'"
     ):
-        assert converter.convert(DICTIONNARY) == {}
+        converter.convert(context_module)
     converter.usage_key = GoTo(["bar"])
 
-    # When a field is not found the default is None
-    assert converter.convert(DICTIONNARY) == {"bar": None, "foo": None}
+    # When a field is found the default is it's value
+    assert converter.convert(context_module) == {
+        "foo": "display_name_value",
+        "bar": "usage_key_value",
+    }
 
     # We should be able to skip a field
     converter.usage_key = GoTo(None)
-    assert converter.convert(DICTIONNARY) == {"foo": None}
-
-    # We may indicate a static value for the field (field not present)
-    converter.display_name = GoTo(["foo"], "static_value")
-    assert converter.convert(DICTIONNARY) == {"foo": "static_value"}
-
-    # When a field is found the default is it's value
-    converter.display_name = GoTo(["foo"])
-    DICTIONNARY["display_name"] = "display_name"
-    assert converter.convert(DICTIONNARY) == {"foo": "display_name"}
+    assert converter.convert(context_module) == {"foo": "display_name_value"}
 
     # We may indicate a static value for the field (field present)
     converter.display_name = GoTo(["foo"], "static_value")
-    assert converter.convert(DICTIONNARY) == {"foo": "static_value"}
+    assert converter.convert(context_module) == {"foo": "static_value"}
 
     # We may apply a transformation to the field
     converter.display_name = GoTo(["foo"], lambda x: x.upper())
-    assert converter.convert(DICTIONNARY) == {"foo": "DISPLAY_NAME"}
+    assert converter.convert(context_module) == {"foo": "DISPLAY_NAME_VALUE"}
 
     # We may apply a transformation to the field with the help of other fields
     converter.display_name = GoTo(
         ["foo"],
         Link(
-            [KwargPath("bar_value", ["foo", "bar"]), KwargPath("quux_value", ["quux"])],
-            lambda x, bar_value, quux_value: (x, bar_value, quux_value),
+            [KwargPath("usage_key_value", ["usage_key"])],
+            lambda x, usage_key_value: (x, usage_key_value),
         ),
     )
-    assert converter.convert(DICTIONNARY) == {"foo": ("display_name", "baz", "quux")}
+    assert converter.convert(context_module) == {
+        "foo": ("display_name_value", "usage_key_value")
+    }
 
     # We may alter the destination path depending on the field value
     converter.display_name = GoTo(lambda x: ["baz"] if x == "change" else ["foo"])
-    assert converter.convert(DICTIONNARY) == {"foo": "display_name"}
-    DICTIONNARY["display_name"] = "change"
-    assert converter.convert(DICTIONNARY) == {"baz": "change"}
+    assert converter.convert(context_module) == {"foo": "display_name_value"}
+    context_module["display_name"] = "change"
+    assert converter.convert(context_module) == {"baz": "change"}
 
     # We may alter the destination path depending on other fields values
+    context_module["display_name"] = "display_name_value"
     converter.display_name = GoTo(
         Link(
-            [KwargPath("bar_value", ["foo", "bar"]), KwargPath("quux_value", ["quux"])],
-            lambda x, bar_value, quux_value: [x, bar_value, quux_value],
+            [KwargPath("usage_key_value", ["usage_key"])],
+            lambda x, usage_key_value: [x, usage_key_value],
         )
     )
-    DICTIONNARY["display_name"] = "display_name"
-    assert converter.convert(DICTIONNARY) == {
-        "display_name": {"baz": {"quux": "display_name"}}
-    }
-    DICTIONNARY["foo"]["bar"] = "change"
-    assert converter.convert(DICTIONNARY) == {
-        "display_name": {"change": {"quux": "display_name"}}
+    assert converter.convert(context_module) == {
+        "display_name_value": {"usage_key_value": "display_name_value"}
     }
 
 
-def test_convert_with_nesting():
+def test_convert_with_nesting(event):
     """Check the convert function for a schmea with nested fields"""
     converter = BaseConverter()
     converter._schema = ContextSchema()  # pylint: disable=protected-access
@@ -209,11 +213,19 @@ def test_convert_with_nesting():
     converter.org_id = GoTo(None)
     converter.course_id = GoTo(None)
     converter.path = GoTo(None)
+    context = event(1, EventType.SERVER).iloc[0]["context"]
+    context["module"] = {
+        "display_name": "display_name_value",
+        "usage_key": "usage_key_value",
+    }
+    context[
+        "path"
+    ] = f"/courses/{context['course_id']}/xblock/{context['module']['usage_key']}/handler/"
     # When the _schema contains more fields than we have defined, Attribute error is raised
     with pytest.raises(
         AttributeError, match="'BaseConverter' object has no attribute '(module)'"
     ):
-        assert converter.convert(DICTIONNARY) == {}
+        converter.convert(context)
 
     # When the _schema of the nested converter contains more fields than we have defined,
     # Attribute error is raised
@@ -224,13 +236,9 @@ def test_convert_with_nesting():
         AttributeError,
         match="'BaseConverter' object has no attribute '(display_name|usage_key)'",
     ):
-        assert converter.convert(DICTIONNARY) == {}
+        converter.convert(context)
 
     # Nested fields should recieve their corresponfing (nested) values
     nested_converter.display_name = GoTo(None)
     nested_converter.usage_key = GoTo(["foo"])
-    DICTIONNARY["usage_key"] = "usage_key"  # field is not nested!
-    assert converter.convert(DICTIONNARY) == {"foo": None}
-    del DICTIONNARY["usage_key"]
-    nested_set(DICTIONNARY, ["module", "usage_key"], "usage_key")
-    assert converter.convert(DICTIONNARY) == {"foo": "usage_key"}
+    assert converter.convert(context) == {"foo": "usage_key_value"}

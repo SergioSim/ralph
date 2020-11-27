@@ -24,9 +24,8 @@ def test_base_xapi_converter_returns_actor_timestamp_and_context(
 
     event_args = {"username": username, "context_args": {"user_id": user_id}}
     base_event = event(1, EventType.BASE_EVENT, **event_args).iloc[0].to_dict()
-    base_event_str = json.dumps(base_event)
     # convert base_event_str
-    xapi_event_str = CONVERTER.convert(base_event_str)
+    xapi_event_str = CONVERTER.convert(base_event)
     xapi_event = json.loads(xapi_event_str)
     assert xapi_event["actor"]["objectType"] == "Agent"
     assert xapi_event["actor"]["account"]["name"] == actor_name

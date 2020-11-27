@@ -162,12 +162,12 @@ class BaseEventSchema(Schema):
 
     @staticmethod
     def get_course_key(data):
-        """Returns the course key: organization+course+sesssion"""
+        """Return the course key: organization+course+sesssion"""
 
         return data["context"]["course_id"][10:]
 
     @staticmethod
     def get_block_id(data, prefix="block-v1", block_type="problem", suffix="@"):
-        """Returns the block id: {prefix}:{course_key}+type@{block_type}+block{suffix}"""
+        """Return the block id: {prefix}:{course_key}+type@{block_type}+block{suffix}"""
 
         return f"{prefix}:{BaseEventSchema.get_course_key(data)}+type@{block_type}+block{suffix}"
