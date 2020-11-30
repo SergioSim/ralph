@@ -20,18 +20,22 @@ class EventType(Enum):
     SERVER = ServerEventFactory
 
 
-def event_generator(size, event_type_enum, **kwargs):
-    """Generate `size` number of events of type `event_type`
+def event_generator(event_type_enum, size=1, **kwargs):
+    """Generate `size` number of events of type `event_type_enum`
 
     Args:
-        size (integer): Number of events to be generated
         event_type (EventType): The type of event to be generated.
+        size (integer): Number of events to be generated
         kwargs: Declarations to use for the generated factory
 
     Returns:
-        DataFrame: With one event per row and size number of rows
+        A dict representing the event when size is 1 or a DataFrame : With
+        one event per row and size number of rows
+
     """
 
+    if size == 1:
+        return event_type_enum.value.create(**kwargs)
     return pd.DataFrame(event_type_enum.value.create_batch(size, **kwargs))
 
 

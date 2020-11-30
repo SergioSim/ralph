@@ -14,7 +14,7 @@ from tests.fixtures.logs import EventType, event_generator
 
 from .test_common import check_error
 
-BULK_EVENTS = event_generator(50, EventType.BASE_EVENT)
+BULK_EVENTS = event_generator(EventType.BASE_EVENT, 50)
 
 SCHEMA = BaseEventSchema()
 
@@ -22,9 +22,7 @@ SCHEMA = BaseEventSchema()
 @pytest.fixture()
 def base_event():
     """Return a base event generator that generates size number of events"""
-    return lambda size=1, **kwargs: event_generator(
-        size, EventType.BASE_EVENT, **kwargs
-    )
+    return lambda **kwargs: event_generator(EventType.BASE_EVENT, **kwargs)
 
 
 def test_valid_ip_should_not_raise_exception(base_event):
@@ -64,7 +62,7 @@ def test_event_source_should_be_server(base_event):
     event is invalid and should raise a ValidationException
     """
     event = base_event()
-    assert event.iloc[0]["event_source"] == "server"
+    assert event["event_source"] == "server"
     with pytest.raises(ValidationError) as excinfo:
         base_event(event_source="not_server")
     check_error(excinfo, "The event event_source field is not `server`")
@@ -75,7 +73,7 @@ def test_page_should_be_none(base_event):
     event is invalid and should rais a ValidationError
     """
     event = base_event()
-    assert event.iloc[0]["page"] is None
+    assert event["page"] is None
     with pytest.raises(ValidationError) as excinfo:
         base_event(page="not_None")
     check_error(excinfo, "The event page field is not None")
@@ -122,11 +120,11 @@ def test_invalid_referer_should_raise_exception(base_event):
 def test_valid_context_user_id_should_not_raise_exception(base_event):
     """Test that a valid context.user_id does not raise a ValidationError"""
     try:
-        context = base_event(context_args={"user_id": ""}).iloc[0]["context"]
+        context = base_event(context_args={"user_id": ""})["context"]
         assert context["user_id"] == ""
-        context = base_event(context_args={"user_id": None}).iloc[0]["context"]
+        context = base_event(context_args={"user_id": None})["context"]
         assert context["user_id"] is None
-        context = base_event(context_args={"user_id": 213456}).iloc[0]["context"]
+        context = base_event(context_args={"user_id": 213456})["context"]
         assert context["user_id"] == 213456
     except ValidationError:
         pytest.fail("Valid base event context.user_id should not raise exceptions")
@@ -144,11 +142,9 @@ def test_invalid_context_user_id_should_raise_exception(base_event):
 
 def test_valid_context_org_id_and_course_id_should_not_raise_exception(base_event):
     """Test that a valid context.org_id and context.course_id does not raise a ValidationError"""
-    context = base_event().iloc[0]["context"]
+    context = base_event()["context"]
     try:
-        context = base_event(context_args={"org_id": "", "course_id": ""}).iloc[0][
-            "context"
-        ]
+        context = base_event(context_args={"org_id": "", "course_id": ""})["context"]
         assert context["org_id"] == ""
         assert context["course_id"] == ""
         context = base_event(
@@ -156,7 +152,7 @@ def test_valid_context_org_id_and_course_id_should_not_raise_exception(base_even
                 "org_id": "valid_org_id",
                 "course_id": "course-v1:valid_org_id+valid_course_id+not_empty",
             },
-        ).iloc[0]["context"]
+        )["context"]
         assert context["org_id"] == "valid_org_id"
         assert (
             context["course_id"] == "course-v1:valid_org_id+valid_course_id+not_empty"
@@ -186,6 +182,15 @@ def test_invalid_context_org_id_and_course_id_should_raise_exception(base_event)
     check_error(excinfo, "course_id should be empty if org_id is empty")
     with pytest.raises(ValidationError) as excinfo:
         context["org_id"] = "not_empty"
+        context["course_id"] = ""
+        base_event(context_args=context)
+    check_error(excinfo, "org_id should be empty if course_id is empty")
+    with pytest.raises(ValidationError) as excinfo:
+        context["course_id"] = "+missing_course-v1+not_empty"
+        base_event(context_args=context)
+    check_error(excinfo, "course_id should starts with 'course-v1'")
+    with pytest.raises(ValidationError) as excinfo:
+        context["course_id"] = "course-v1:+valid_course_id+not_empty"
         base_event(context_args=context)
     check_error(
         excinfo, "organization ID in the course ID does not match", operator.contains

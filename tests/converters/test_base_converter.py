@@ -213,7 +213,7 @@ def test_convert_with_nesting(event):
     converter.org_id = GoTo(None)
     converter.course_id = GoTo(None)
     converter.path = GoTo(None)
-    context = event(1, EventType.SERVER).iloc[0]["context"]
+    context = event(EventType.SERVER)["context"]
     context["module"] = {
         "display_name": "display_name_value",
         "usage_key": "usage_key_value",

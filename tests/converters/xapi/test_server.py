@@ -42,6 +42,6 @@ def test_valid_server_events_should_match_expected_xapi_statements():
 def test_converting_invalid_server_event_should_return_none(event):
     """The converter should return None for invalid events"""
 
-    server_event = event(1, EventType.SERVER).iloc[0]
+    server_event = event(EventType.SERVER)
     server_event["username"] = "This user name is more than 32 chars long!"
     assert CONVERTER.convert(server_event) is None

@@ -15,7 +15,7 @@ from .test_common import check_error, check_loading_valid_events
 @pytest.fixture()
 def server_event():
     """Return a server event generator that generates size number of events"""
-    return lambda size=1, **kwargs: event_generator(size, EventType.SERVER, **kwargs)
+    return lambda **kwargs: event_generator(EventType.SERVER, **kwargs)
 
 
 def test_loading_valid_events_should_not_raise_exceptions():
@@ -39,9 +39,7 @@ def test_invalid_event_type_should_raise_exception(server_event):
         server_event(event_type="/path/not/equal/to/context/path")
     check_error(excinfo, "event_type should be equal to context.path")
     with pytest.raises(ValidationError) as excinfo:
-        server_event(
-            1, event_type="invalid/path", context_args={"path": "invalid/path"}
-        )
+        server_event(event_type="invalid/path", context_args={"path": "invalid/path"})
     check_error(excinfo, "Not a valid URL.")
     with pytest.raises(ValidationError) as excinfo:
         server_event(event_type=123, context_args={"path": 123})

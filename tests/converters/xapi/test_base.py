@@ -23,7 +23,7 @@ def test_base_xapi_converter_returns_actor_timestamp_and_context(
     """Test that BaseXapiConverter returns actor, timestamp and context"""
 
     event_args = {"username": username, "context_args": {"user_id": user_id}}
-    base_event = event(1, EventType.BASE_EVENT, **event_args).iloc[0].to_dict()
+    base_event = event(EventType.BASE_EVENT, **event_args)
     # convert base_event_str
     xapi_event_str = CONVERTER.convert(base_event)
     xapi_event = json.loads(xapi_event_str)

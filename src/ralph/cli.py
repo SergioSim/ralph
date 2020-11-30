@@ -7,6 +7,7 @@ from inspect import signature
 
 import click
 import click_log
+import pandas as pd
 from click_option_group import optgroup
 
 from ralph.backends import BackendTypes
@@ -134,6 +135,32 @@ def to_xapi(platform):
             yield XapiConverterSelector(line, platform).convert()
 
     return processor
+
+
+@cli.command()
+@click.option(
+    "-p",
+    "--platform",
+    type=str,
+    required=True,
+    help="The platform (hostname) to use in the xApi statements",
+)
+@click.option(
+    "-c",
+    "--chunksize",
+    type=int,
+    default=DEFAULT_GELF_PARSER_CHUNCK_SIZE,
+    help="Convert edx events to xAPI by chunks of size #",
+)
+def convert(platform, chunksize):
+    """Convert extracted events to xApi"""
+
+    logger.info("Converting events using chunk size (chunk size: %d)", chunksize)
+
+    chunks = pd.read_json(sys.stdin, lines=True, chunksize=chunksize)
+    for chunk in chunks:
+        for _, event in chunk.iterrows():
+            click.echo(XapiConverterSelector(event.to_json(), platform).convert())
 
 
 @click.argument("archive", required=False)
