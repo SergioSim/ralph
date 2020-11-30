@@ -29,7 +29,8 @@ FROM core as development
 COPY . /app/
 
 RUN apt-get update && \
-    apt-get install -y gcc && \
+    apt-get install -y gcc build-essential wget && \
+    wget -O - pi.dk/3 > install.sh && bash install.sh && \
     rm -rf /var/lib/apt/lists/*
 
 # Uninstall ralph and re-install it in editable mode along with development
