@@ -1,20 +1,10 @@
 """Server event xAPI Converter"""
 
-from tincan import Activity, ActivityDefinition, LanguageMap, Verb
-
-from ralph.converters.base_converter import GoTo
+from ralph.converters.base_converter import GetFromField
 from ralph.schemas.edx.server import ServerEventSchema
 
 from .base import BaseXapiConverter
-from .constants import (
-    EN,
-    PAGE,
-    VIEWED,
-    XAPI_ACTIVITY_PAGE,
-    XAPI_EXTENSION_REQUEST,
-    XAPI_VERB_VIEWED,
-)
-
+from . import constants as const
 
 class ServerXapiConverter(BaseXapiConverter):
     """Converts a common edx server event to xAPI
@@ -24,27 +14,55 @@ class ServerXapiConverter(BaseXapiConverter):
 
     _schema = ServerEventSchema()
 
-    # pylint: disable=unnecessary-lambda
-    event_type = GoTo(
-        ["object"], lambda event_type: ServerXapiConverter.get_object(event_type)
-    )
-    event = GoTo(["context", "extensions", XAPI_EXTENSION_REQUEST])
-
-    @staticmethod
-    def get_object(event_type):
-        """Return the xAPI object property"""
-
-        definition = ActivityDefinition(
-            type=XAPI_ACTIVITY_PAGE, name=LanguageMap({EN: PAGE})
-        )
-        viewed_page = BaseXapiConverter._platform + event_type
-        return Activity(id=viewed_page, definition=definition)
-
-    @staticmethod
-    def independent_fields():
-        """Declare fields that stand on their own"""
-
-        fields = BaseXapiConverter.independent_fields()
-        return fields + [
-            GoTo(["verb"], Verb(id=XAPI_VERB_VIEWED, display=LanguageMap({EN: VIEWED})))
-        ]
+    conversion_dict = {
+        "version": const.VERSION,
+        "actor": {
+            "account": {
+                "name": GetFromField(
+                    "username",
+                    lambda username: username if username else "anonymous"
+                ),
+                "homePage": lambda: BaseXapiConverter._platform
+            },
+            "objectType": "Agent"
+        },
+        "verb": {
+            "id": const.XAPI_VERB_VIEWED,
+            "display": {
+                "en": const.VIEWED
+            }
+        },
+        "object": {
+            "id": GetFromField(
+                "event_type",
+                lambda event_type: BaseXapiConverter._platform + event_type
+            ),
+            "definition": {
+                "type": const.XAPI_ACTIVITY_PAGE,
+                "name": {
+                "en": const.PAGE
+                }
+            },
+            "objectType": "Activity"
+        },
+        "context": {
+            "platform": lambda: BaseXapiConverter._platform,
+            "extensions": {
+                const.XAPI_EXTENSION_ACCEPT_LANGUAGE: GetFromField("accept_language"),
+                const.XAPI_EXTENSION_AGENT: GetFromField("agent"),
+                const.XAPI_EXTENSION_COURSE_ID: GetFromField("context>course_id"),
+                const.XAPI_EXTENSION_COURSE_USER_TAGS: GetFromField(
+                    "context>course_user_tags",
+                    lambda course_user_tags: course_user_tags if course_user_tags else {}
+                ),
+                const.XAPI_EXTENSION_HOST: GetFromField("host"),
+                const.XAPI_EXTENSION_IP: GetFromField("ip", lambda ip: ip.exploded if ip else ip),
+                const.XAPI_EXTENSION_ORG_ID: GetFromField("context>org_id"),
+                const.XAPI_EXTENSION_PATH: GetFromField("context>path"),
+                const.XAPI_EXTENSION_REFERER: GetFromField("referer"),
+                const.XAPI_EXTENSION_REQUEST: GetFromField("event"),
+                const.XAPI_EXTENSION_USER_ID: GetFromField("context>user_id")
+            }
+        },
+        "timestamp": GetFromField("time", lambda time: time.isoformat())
+    }

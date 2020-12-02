@@ -1,8 +1,11 @@
 """Converter Base Class"""
 
+import copy
 import logging
 from dataclasses import dataclass
-from typing import Callable, List, Union
+from functools import reduce
+import json
+from typing import Callable, Union
 
 from marshmallow import Schema, ValidationError
 
@@ -11,16 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 def nested_get(dictionary, keys):
-    """Return the nested value by keys array"""
-    if not keys:
-        return None
-    for key in keys[:-1]:
-        if not isinstance(dictionary, dict):
+    for key in keys:
+        try:
+            dictionary = dictionary[key]
+        except (KeyError, TypeError):
             return None
-        dictionary = dictionary.get(key, None)
-    if not isinstance(dictionary, dict):
-        return None
-    return dictionary.get(keys[-1], None)
+    return dictionary
 
 
 def nested_set(dictionary, keys, value):
@@ -30,65 +29,61 @@ def nested_set(dictionary, keys, value):
     dictionary[keys[-1]] = value
 
 
-@dataclass
-class KwargPath:
-    """Stores a key word argument and a path to retrieve it's value"""
-
-    kwarg: str
-    path: list
-
-
-@dataclass
-class Link:
-    """Stores a function and it's key word arguments
-
-    It is used to define transormations that require multiple input fields
-    """
-
-    kwarg_paths: List[KwargPath]
-    function: Callable
-
-    def get(self, field, event):
-        """Calls the function with it's key word arguments and returns the obtained value"""
-        kwargs = {}
-        for kwarg_path in self.kwarg_paths:
-            kwargs[kwarg_path.kwarg] = nested_get(event, kwarg_path.path)
-        return self.function(field, **kwargs)
+def nested_del(dictionary, keys):
+    """Remove the nested dict key by keys array"""
+    for key in keys[:-1]:
+        if key not in dictionary:
+            return
+        dictionary = dictionary[key]
+    if keys[-1] not in dictionary:
+        return
+    del dictionary[keys[-1]]
 
 
 @dataclass
-class GoTo:
-    """Stores the destination path of a field and the applied transformations"""
+class GetFromField:
+    """Stores the source path of a field and the applied transformations"""
 
-    _path: Union[None, List[str], Callable, Link]
-    _value: Union[int, str, list, dict, Callable, Link] = lambda x: x
+    path: Union[None, str]
+    _value: Union[int, str, list, dict, Callable] = lambda x: x
 
-    def path(self, field, event):
-        """Return the destination path of the field"""
-        return self._get(self._path, field, event)
-
-    def value(self, field, event):
-        """Return the value of the field"""
-        return self._get(self._value, field, event)
-
-    @staticmethod
-    def _get(value, field, event):
+    def value(self, field):
         """Call transformation function (if defined) and return the (transformed) value"""
-        if isinstance(value, Link):
-            return value.get(field, event)
-        if callable(value):
-            return value(field)
-        return value
+        if callable(self._value):
+            return self._value(field)
+        return self._value
 
 
 class BaseConverter:
     """Converter Base Class
 
-    Converters define for each field present in their _schema a GoTo mapping
-    which express the destination(s) path(s) and transformation(s) to apply to the field
+    Converters define a conversion dictionnary to convert from one json schema to another
     """
 
     _schema = Schema()
+    conversion_dict = {}
+
+    def __init__(self):
+        """Initialize Base Converter"""
+
+        self.conversion_dict = copy.deepcopy(type(self).conversion_dict)
+        self.flat_conversion_array = []
+        self.fill_flat_conversion_array(self.conversion_dict, [])
+
+
+    def fill_flat_conversion_array(self, conversion_dict, path):
+        """Create an array containg all conversion rules"""
+        for key, value in conversion_dict.items():
+            if isinstance(value, dict):
+                path.append(key)
+                self.fill_flat_conversion_array(conversion_dict[key], path)
+                path.pop()
+            elif callable(value):
+                self.flat_conversion_array.append((path + [key], value))
+            elif isinstance(value, GetFromField):
+                value.path = value.path.split(">")
+                self.flat_conversion_array.append((path + [key], value))
+
 
     def convert(self, event):
         """Validates and returns the converted event
@@ -101,25 +96,37 @@ class BaseConverter:
 
         """
         try:
-            validated_event = self._schema.load(event)
+            valid_event = self._schema.load(event)
         except ValidationError as err:
             logger.info("Invalid event!")
             logger.debug("Error: %s \nFor Event %s", err, event)
             return None
-        return self._convert(self, validated_event, {}, [])
+        for key, value in self.flat_conversion_array:
+            if callable(value):
+                nested_set(self.conversion_dict, key, value())
+            elif isinstance(value, GetFromField):
+                field = value.value(nested_get(valid_event, value.path))
+                if field is None:
+                    nested_del(self.conversion_dict, key)
+                else:
+                    nested_set(self.conversion_dict, key, field)
+        return json.dumps(self.conversion_dict)
 
-    @staticmethod
-    def _convert(converter, event, result, path):
-        # pylint: disable=protected-access
-        for key in converter._schema.fields:
-            go_to = getattr(converter, key)
-            if isinstance(go_to, BaseConverter):
+    def _convert(self, event, conversion_dict, path):
+        """Walk recursively through the conversion_dict,
+        replacing GetFromField's and lambda's with their values from the event
+        """
+        for key, value in conversion_dict.items():
+            if isinstance(value, dict):
                 path.append(key)
-                converter._convert(go_to, event, result, path)
+                self._convert(event, conversion_dict[key], path)
                 path.pop()
-            if isinstance(go_to, GoTo):
-                field = nested_get(event, path + [key])
-                go_to_path = go_to.path(field, event)
-                if go_to_path:
-                    nested_set(result, go_to_path, go_to.value(field, event))
-        return result
+            elif callable(value):
+                nested_set(self.conversion_dict, path + [key], value())
+            elif isinstance(value, GetFromField):
+                field = nested_get(event, value.path)
+                new_field_value = value.value(field)
+                if new_field_value is None:
+                    nested_del(self.conversion_dict, path + [key])
+                else:
+                    nested_set(self.conversion_dict, path + [key], value.value(field))

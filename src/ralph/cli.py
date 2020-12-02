@@ -145,22 +145,12 @@ def to_xapi(platform):
     required=True,
     help="The platform (hostname) to use in the xApi statements",
 )
-@click.option(
-    "-c",
-    "--chunksize",
-    type=int,
-    default=DEFAULT_GELF_PARSER_CHUNCK_SIZE,
-    help="Convert edx events to xAPI by chunks of size #",
-)
-def convert(platform, chunksize):
+def convert(platform):
     """Convert extracted events to xApi"""
 
-    logger.info("Converting events using chunk size (chunk size: %d)", chunksize)
-
-    chunks = pd.read_json(sys.stdin, lines=True, chunksize=chunksize)
-    for chunk in chunks:
-        for _, event in chunk.iterrows():
-            click.echo(XapiConverterSelector(event.to_json(), platform).convert())
+    logger.info("Converting events to xAPI")
+    for line in sys.stdin:
+        click.echo(XapiConverterSelector(line, platform).convert())
 
 
 @click.argument("archive", required=False)
