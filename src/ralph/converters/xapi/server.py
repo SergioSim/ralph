@@ -56,7 +56,7 @@ class ServerXapiConverter(BaseXapiConverter):
                     lambda course_user_tags: course_user_tags if course_user_tags else {}
                 ),
                 const.XAPI_EXTENSION_HOST: GetFromField("host"),
-                const.XAPI_EXTENSION_IP: GetFromField("ip", lambda ip: ip.exploded if ip else ip),
+                const.XAPI_EXTENSION_IP: GetFromField("ip"),
                 const.XAPI_EXTENSION_ORG_ID: GetFromField("context>org_id"),
                 const.XAPI_EXTENSION_PATH: GetFromField("context>path"),
                 const.XAPI_EXTENSION_REFERER: GetFromField("referer"),
@@ -64,5 +64,5 @@ class ServerXapiConverter(BaseXapiConverter):
                 const.XAPI_EXTENSION_USER_ID: GetFromField("context>user_id")
             }
         },
-        "timestamp": GetFromField("time", lambda time: time.isoformat())
+        "timestamp": GetFromField("time")
     }

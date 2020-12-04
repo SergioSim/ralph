@@ -7,6 +7,10 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 import pandas as pd
+import rapidjson
+import orjson
+import ujson
+import json
 
 from .defaults import DEFAULT_GELF_PARSER_CHUNCK_SIZE
 
@@ -67,3 +71,11 @@ class GELFParser(BaseParser):
         for chunk in chunks:
             for event in chunk["short_message"].values:
                 yield event
+        # for line in input_file:
+        #     yield ujson.loads(line)["short_message"]
+        # for line in input_file:
+        #     yield orjson.loads(line)["short_message"]
+        # for line in input_file:
+        #     yield rapidjson.loads(line)["short_message"]
+        # for line in input_file:
+        #     yield json.loads(line)["short_message"]

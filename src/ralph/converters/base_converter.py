@@ -95,12 +95,13 @@ class BaseConverter:
             None if validation fails, else the converted event (dict)
 
         """
-        try:
-            valid_event = self._schema.load(event)
-        except ValidationError as err:
-            logger.info("Invalid event!")
-            logger.debug("Error: %s \nFor Event %s", err, event)
-            return None
+        # try:
+        #     valid_event = self._schema.load(event)
+        # except ValidationError as err:
+        #     logger.info("Invalid event!")
+        #     logger.debug("Error: %s \nFor Event %s", err, event)
+        #     return None
+        valid_event = event
         for key, value in self.flat_conversion_array:
             if callable(value):
                 nested_set(self.conversion_dict, key, value())

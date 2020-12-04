@@ -83,7 +83,7 @@ def backends_options(name=None, backends=None):
     return wrapper
 
 
-@cli.group(chain=True, invoke_without_command=True)
+@cli.command()
 @click.option(
     "-p",
     "--parser",
@@ -105,37 +105,10 @@ def extract(parser, chunksize):
         "Extracting events using the %s parser (chunk size: %d)", parser, chunksize
     )
 
-
-@extract.resultcallback()
-def extract_pipeline(processors, parser, chunksize):
-    """Read events from standart input, parse them with parser and apply processors"""
-
     parser = get_class_from_name(parser, PARSERS)()
-    iterator = parser.parse(sys.stdin, chunksize=chunksize)
-    for processor in processors:
-        iterator = processor(iterator)
-    for event in iterator:
-        if event:
-            click.echo(event)
 
-
-@extract.command()
-@click.option(
-    "-p",
-    "--platform",
-    type=str,
-    required=True,
-    help="The platform (hostname) to use in the xApi statements",
-)
-def to_xapi(platform):
-    """Convert extracted events to xApi"""
-
-    def processor(iterator):
-        for line in iterator:
-            yield XapiConverterSelector(line, platform).convert()
-
-    return processor
-
+    for event in parser.parse(sys.stdin, chunksize=chunksize):
+        click.echo(event)
 
 @cli.command()
 @click.option(
