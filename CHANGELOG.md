@@ -18,5 +18,6 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Parse (gzipped) tracking logs in GELF format
 - Support for application's configuration file
 - Add optional sentry integration
+- Add edx tracking logs (de)serializers for server events
 
 [unreleased]: https://github.com/openfun/ralph

@@ -2,6 +2,7 @@
 
 import json
 import sys
+from io import StringIO
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -13,6 +14,7 @@ from ralph.cli import cli
 from ralph.defaults import APP_DIR, FS_STORAGE_DEFAULT_PATH
 
 from tests.fixtures.backends import ES_TEST_HOSTS, ES_TEST_INDEX
+from tests.fixtures.logs import EventType
 
 
 def test_help_option():
@@ -37,9 +39,8 @@ def test_extract_command_usage():
     assert result.exit_code == 0
     assert (
         "Options:\n"
-        "  -p, --parser [gelf]      Container format parser used to extract events\n"
-        "                           [required]\n\n"
-        "  -c, --chunksize INTEGER  Parse events by chunks of size #\n"
+        "  -p, --parser [gelf]  Container format parser used to extract events\n"
+        "                       [required]\n\n"
     ) in result.output
 
     result = runner.invoke(cli, ["extract"])
@@ -59,6 +60,53 @@ def test_extract_command_with_gelf_parser(gelf_logger):
         gelf_content = log_file.read()
         result = runner.invoke(cli, ["extract", "-p", "gelf"], input=gelf_content)
         assert '{"username": "foo"}' in result.output
+
+
+def test_convert_command_usage():
+    """Test ralph convert command usage"""
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["convert", "--help"])
+
+    assert result.exit_code == 0
+    assert (
+        "Options:\n"
+        "  -p, --platform TEXT  The platform (hostname) to use in the xApi statements\n"
+        "                       [required]\n"
+    ) in result.output
+
+    result = runner.invoke(cli, ["convert"])
+    assert result.exit_code > 0
+    assert "Error: Missing option '-p' / '--platform'." in result.output
+
+
+def test_convert_command_with_platform(gelf_logger, event):
+    """Test the extract command using the GELF parser"""
+
+    gelf_logger.info('{"username": "foo"}')
+
+    runner = CliRunner()
+    with StringIO() as file:
+        valid_event = json.dumps(event(EventType.SERVER, username="JohnDoe"))
+        file.writelines(
+            [
+                # Not parsable json
+                "{ This is not valid json and raises json.decoder.JSONDecodeError\n",
+                # Missing event_source!
+                "{}\n",
+                # Not a dictionnary
+                "[]\n",
+                # valid
+                valid_event,
+            ]
+        )
+        platform = "https://fun-mooc.fr"
+        result = runner.invoke(cli, ["convert", "-p", platform], input=file.getvalue())
+        assert "Invalid event! Not parsable json!" in result.output
+        assert "Invalid event! Missing event_source!" in result.output
+        assert "Invalid event! Not a dictionnary!" in result.output
+        assert platform in result.output
+        assert '"actor": {"account": {"name": "JohnDoe"' in result.output
 
 
 def test_fetch_command_usage():
