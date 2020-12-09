@@ -87,7 +87,7 @@ def test_convert_command_with_platform(gelf_logger, event):
 
     runner = CliRunner()
     with StringIO() as file:
-        valid_event = json.dumps(event(EventType.SERVER, username="JohnDoe"))
+        valid_event = json.dumps(event(EventType.SERVER, context_args={"user_id": 1}))
         file.writelines(
             [
                 # Not parsable json
@@ -106,7 +106,7 @@ def test_convert_command_with_platform(gelf_logger, event):
         assert "Invalid event! Missing event_source!" in result.output
         assert "Invalid event! Not a dictionnary!" in result.output
         assert platform in result.output
-        assert '"actor": {"account": {"name": "JohnDoe"' in result.output
+        assert '"actor": {"account": {"name": "1"' in result.output
 
 
 def test_fetch_command_usage():

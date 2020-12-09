@@ -20,7 +20,8 @@ class ServerEventToXapi(BaseXapiConverter):
         "actor": {
             "account": {
                 "name": GetFromField(
-                    "username", lambda username: username if username else "anonymous"
+                    "context>user_id",
+                    lambda user_id: str(user_id) if user_id else "student",
                 ),
                 "homePage": lambda: BaseXapiConverter._platform,
             },
@@ -54,11 +55,7 @@ class ServerEventToXapi(BaseXapiConverter):
                 const.XAPI_EXTENSION_IP: GetFromField("ip"),
                 const.XAPI_EXTENSION_ORG_ID: GetFromField("context>org_id"),
                 const.XAPI_EXTENSION_PATH: GetFromField("context>path"),
-                const.XAPI_EXTENSION_REFERER: GetFromField("referer"),
                 const.XAPI_EXTENSION_REQUEST: GetFromField("event"),
-                const.XAPI_EXTENSION_USER_ID: GetFromField(
-                    "context>user_id", lambda user_id: user_id if user_id else ""
-                ),
             },
         },
         "timestamp": GetFromField("time"),

@@ -26,23 +26,19 @@ def test_converting_invalid_server_event_should_return_none(event):
 
 
 @pytest.mark.parametrize("user_id", [None, "", 123])
-@pytest.mark.parametrize("username, actor_name", [["", "anonymous"], ["user", "user"]])
-def test_server_xapi_converter_returns_actor_timestamp_and_context(
-    event, user_id, username, actor_name
-):
+def test_server_xapi_converter_returns_actor_timestamp_and_context(event, user_id):
     """Test that ServerEventToXapi returns actor, timestamp and context"""
 
-    event_args = {"username": username, "context_args": {"user_id": user_id}}
-    server_event = event(EventType.SERVER, **event_args)
-    # convert server_event_str
+    server_event = event(EventType.SERVER, context_args={"user_id": user_id})
     xapi_event_str = CONVERTER.convert(server_event)
     xapi_event = json.loads(xapi_event_str)
+    user_id = user_id if user_id else "student"
     assert xapi_event["actor"]["objectType"] == "Agent"
-    assert xapi_event["actor"]["account"]["name"] == actor_name
+    assert xapi_event["actor"]["account"]["name"] == str(user_id)
     assert xapi_event["actor"]["account"]["homePage"] == PLATFORM
     assert xapi_event["timestamp"] == server_event["time"]
     course_user_tags = server_event["context"].get("course_user_tags", {})
-    user_id = user_id if user_id else ""
+
     assert xapi_event["context"] == {
         "extensions": {
             "https://www.edx.org/extension/accept_language": server_event[
@@ -57,9 +53,7 @@ def test_server_xapi_converter_returns_actor_timestamp_and_context(
             "https://www.edx.org/extension/ip": server_event["ip"],
             "https://www.edx.org/extension/org_id": server_event["context"]["org_id"],
             "https://www.edx.org/extension/path": server_event["context"]["path"],
-            "https://www.edx.org/extension/referer": server_event["referer"],
             "https://www.edx.org/extension/request": server_event["event"],
-            "https://www.edx.org/extension/user_id": user_id,
         },
         "platform": PLATFORM,
     }
