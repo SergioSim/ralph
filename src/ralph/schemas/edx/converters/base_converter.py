@@ -8,7 +8,7 @@ from typing import Callable
 
 from marshmallow import Schema, ValidationError
 
-# xapi module logger
+# xAPI module logger
 logger = logging.getLogger(__name__)
 
 
@@ -31,6 +31,21 @@ def nested_set(dictionary, keys, value):
     dictionary[keys[-1]] = value
 
 
+def nested_del(dictionary, keys):
+    """Remove the nested dict key by keys array"""
+    for key in keys[:-1]:
+        if key not in dictionary:
+            return
+        dictionary = dictionary[key]
+    if keys[-1] not in dictionary:
+        return
+    del dictionary[keys[-1]]
+
+
+class ConversionException(Exception):
+    """Raised when it's not possible to convert an event"""
+
+
 @dataclass
 class GetFromField:
     """Stores the source path of a field and the transformer function"""
@@ -50,14 +65,14 @@ class GetFromField:
 class BaseConverter:
     """Converter Base Class
 
-    Converters define a conversion dictionnary to convert from one schema to another
+    Converters define a conversion dictionary to convert from one schema to another
     """
 
     _schema = Schema()
     conversion_dict = {}
 
     def __init__(self):
-        """Initialize Base Converter"""
+        """Initialize BaseConverter"""
 
         self.conversion_dict = copy.deepcopy(type(self).conversion_dict)
         self.init_flat_conversion_array()
@@ -92,11 +107,20 @@ class BaseConverter:
         try:
             self._schema.load(event)
         except ValidationError as err:
-            logger.info("Invalid event!")
+            logger.error("Invalid event!")
             logger.debug("Error: %s \nFor Event %s", err, event)
             return None
 
         for key, value in self.flat_conversion_array:
-            nested_set(self.conversion_dict, key, value.value(event))
+            try:
+                field_value = value.value(event)
+                if field_value is None:
+                    nested_del(self.conversion_dict, key)
+                    continue
+                nested_set(self.conversion_dict, key, field_value)
+            except ConversionException as err:
+                logger.error("Unable to convert! %s", err)
+                logger.debug("For Event %s", event)
+                return None
 
         return json.dumps(self.conversion_dict)

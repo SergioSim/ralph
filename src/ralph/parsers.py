@@ -16,7 +16,7 @@ class BaseParser(ABC):
 
     @abstractmethod
     def parse(self, input_file):
-        """Parse GELF formatted logs (one json string event per row).
+        """Parse GELF formatted logs (one JSON string event per row).
 
         Args:
             input_file (string): Path to the log file to parse.
@@ -37,7 +37,7 @@ class GELFParser(BaseParser):
     name = "gelf"
 
     def parse(self, input_file):
-        """Parse GELF formatted logs (one json string event per row).
+        """Parse GELF formatted logs (one JSON string event per row).
 
         Args:
             input_file (file): log file to parse
@@ -53,7 +53,6 @@ class GELFParser(BaseParser):
                 yield json.loads(event)["short_message"]
             except (json.JSONDecodeError, TypeError, KeyError) as err:
                 logger.error(
-                    "Invalid event! Not json parsable or short_message missing!"
+                    "Invalid event! Not JSON parsable or short_message missing!"
                 )
                 logger.debug("%s%s", type(err), err)
-                continue

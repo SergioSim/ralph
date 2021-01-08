@@ -20,7 +20,7 @@ CONTEXT_MODULE = {"display_name": "display_name_value", "usage_key": "usage_key_
 
 
 def test_nested_get_should_return_given_value():
-    """The nested_get function should return the value when it's present in the dictionnary"""
+    """The nested_get function should return the value when it's present in the dictionary"""
 
     dictionnary = {"foo": {"bar": "bar_value"}}
     assert nested_get(dictionnary, ["foo", "bar"]) == "bar_value"
@@ -37,7 +37,7 @@ def test_nested_get_should_return_null_when_value_does_not_exists():
 
 
 def test_nested_set_creating_new_fields():
-    """When the fields are not present, nested_set should add them to the dictionnary"""
+    """When the fields are not present, nested_set should add them to the dictionary"""
 
     dictionnary = {}
     nested_set(dictionnary, ["foo", "bar"], "baz")
@@ -70,7 +70,7 @@ def test_get_from_field(field, args, expected_value):
 
 
 def test_convert_with_empty_conversion_table():
-    """When the converstion table is empty, convert should write an empty dictionnary"""
+    """When the conversion table is empty, convert should write an empty dictionary"""
 
     assert BASE_CONVERTER.convert({}) == json.dumps({})
     BASE_CONVERTER._schema = ContextModuleSchema()  # pylint: disable=protected-access
@@ -101,7 +101,7 @@ def test_convert_with_failing_schema_validation():
     ],
 )  # pylint: disable=too-many-arguments
 def test_convert_with_succeeding_schema_validation_and_static_values(static_value):
-    """Conversion dict with a static values keeps the static values"""
+    """Conversion dictionary with a static values keeps the static values"""
 
     BaseConverter.conversion_dict = {"static": static_value}
     base_converter = BaseConverter()
@@ -112,7 +112,7 @@ def test_convert_with_succeeding_schema_validation_and_static_values(static_valu
 
 
 def test_convert_with_succeeding_schema_validation_and_function_value():
-    """Conversion dict with function values executes the function and keeps the result"""
+    """Conversion dictionary with function values executes the function and keeps the result"""
 
     BaseConverter.conversion_dict = {"function": lambda: "function_output"}
     base_converter = BaseConverter()
@@ -123,7 +123,7 @@ def test_convert_with_succeeding_schema_validation_and_function_value():
 
 
 def test_convert_with_succeeding_schema_validation_and_get_from_field_value():
-    """Conversion dict with GetFromField objects gets their value"""
+    """Conversion dictionary with GetFromField objects gets their value"""
 
     # By default we get the field from the event and put it `as it is` in the converted event
     BaseConverter.conversion_dict = {"get_from_field": GetFromField("usage_key")}
@@ -133,7 +133,7 @@ def test_convert_with_succeeding_schema_validation_and_get_from_field_value():
         {"get_from_field": "usage_key_value"}
     )
 
-    # When we want to transfrom the original value we use a lambda function for that
+    # When we want to transform the original value we use a lambda function for that
     BaseConverter.conversion_dict["get_from_field_with_function"] = GetFromField(
         "usage_key", lambda usage_key: usage_key.upper()
     )
@@ -148,9 +148,9 @@ def test_convert_with_succeeding_schema_validation_and_get_from_field_value():
 
 
 def test_convert_with_nested_fields(event):
-    """Check the convert function for a schmea with nested fields"""
+    """Check the convert function for a schema with nested fields"""
 
-    # Create the context dict and conversion_dict
+    # Create the context dictionary and conversion_dict
     context = event(EventType.SERVER)["context"]
     context["module"] = CONTEXT_MODULE
     course_id = context["course_id"]

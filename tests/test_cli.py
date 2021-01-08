@@ -71,8 +71,9 @@ def test_convert_command_usage():
     assert result.exit_code == 0
     assert (
         "Options:\n"
-        "  -p, --platform TEXT  The platform (hostname) to use in the xApi statements\n"
-        "                       [required]\n"
+        "  -p, --platform TEXT  The 'context>platform' and 'actor>account>homePage' to\n"
+        "                       use in the xAPI statements  [required]\n\n"
+        "  -a, --anonymize      Anonymize xAPI statements"
     ) in result.output
 
     result = runner.invoke(cli, ["convert"])
@@ -87,26 +88,26 @@ def test_convert_command_with_platform(gelf_logger, event):
 
     runner = CliRunner()
     with StringIO() as file:
-        valid_event = json.dumps(event(EventType.SERVER, context_args={"user_id": 1}))
         file.writelines(
             [
-                # Not parsable json
-                "{ This is not valid json and raises json.decoder.JSONDecodeError\n",
+                # Not parsable JSON
+                "{ This is not valid JSON and raises json.decoder.JSONDecodeError\n",
                 # Missing event_source!
                 "{}\n",
-                # Not a dictionnary
+                # Not a dictionary
                 "[]\n",
                 # valid
-                valid_event,
+                json.dumps(event(EventType.SERVER, context_args={"user_id": 1})),
             ]
         )
         platform = "https://fun-mooc.fr"
         result = runner.invoke(cli, ["convert", "-p", platform], input=file.getvalue())
-        assert "Invalid event! Not parsable json!" in result.output
-        assert "Invalid event! Missing event_source!" in result.output
-        assert "Invalid event! Not a dictionnary!" in result.output
-        assert platform in result.output
-        assert '"actor": {"account": {"name": "1"' in result.output
+
+    assert "Invalid event! Not parsable JSON!" in result.output
+    assert "Invalid event! Missing event_source!" in result.output
+    assert "Invalid event! Not a dictionary!" in result.output
+    assert platform in result.output
+    assert '"actor": {"account": {"name": "1"' in result.output
 
 
 def test_fetch_command_usage():
@@ -247,7 +248,7 @@ def test_list_command_usage():
         "    --ldp-endpoint TEXT\n"
         "  -b, --backend [ldp|fs]          Backend  [required]\n"
         "  -n, --new / -a, --all           List not fetched (or all) archives\n"
-        "  -D, --details / -I, --ids       Get archives detailled output (JSON)\n"
+        "  -D, --details / -I, --ids       Get archives detailed output (JSON)\n"
     ) in result.output
 
     result = runner.invoke(cli, ["list"])
@@ -308,7 +309,7 @@ def test_list_command_with_ldp_backend(monkeypatch):
     assert result.exit_code == 0
     assert "\n".join(archive_list) in result.output
 
-    # List archives with detailled output
+    # List archives with detailed output
     result = runner.invoke(cli, ["list", "-b", "ldp", "--ldp-endpoint", "ovh-eu", "-D"])
     assert result.exit_code == 0
     assert (
@@ -371,7 +372,7 @@ def test_list_command_with_fs_backend(fs, monkeypatch):
     assert result.exit_code == 0
     assert "\n".join(archive_list) in result.output
 
-    # List archives with detailled output
+    # List archives with detailed output
     result = runner.invoke(cli, ["list", "-b", "fs", "-D"])
     assert result.exit_code == 0
     assert (

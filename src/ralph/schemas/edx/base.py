@@ -68,7 +68,7 @@ class ContextModuleSchema(Schema):
 
 
 class ContextSchema(BaseContextSchema):
-    """Context with module field. Present in Capa problems related
+    """Context with module field. Present in CAPA problems related
     events.
     """
 

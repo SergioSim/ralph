@@ -109,14 +109,20 @@ def extract(parser):
     "--platform",
     type=str,
     required=True,
-    help="The platform (hostname) to use in the xApi statements",
+    help="The 'context>platform' and 'actor>account>homePage' to use in the xAPI statements",
 )
-def convert(platform):
-    """Convert extracted events to xApi"""
+@click.option(
+    "-a",
+    "--anonymize",
+    is_flag=True,
+    help="Anonymize xAPI statements",
+)
+def convert(platform, anonymize):
+    """Convert extracted events to xAPI"""
 
-    logger.info("Converting events to xAPI")
+    logger.info("Converting events to %sxAPI", "anonymized " if anonymize else "")
 
-    converter_selector = XapiConverterSelector(platform)
+    converter_selector = XapiConverterSelector(platform, anonymize)
 
     for event in converter_selector.convert(sys.stdin):
         click.echo(event)
@@ -199,7 +205,7 @@ def push(backend, archive, chunk_size, force, **options):
     "-D/-I",
     "--details/--ids",
     default=False,
-    help="Get archives detailled output (JSON)",
+    help="Get archives detailed output (JSON)",
 )
 def list_(details, new, backend, **options):
     """List available archives from a configured storage backend"""

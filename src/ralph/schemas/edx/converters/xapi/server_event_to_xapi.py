@@ -1,15 +1,27 @@
 """Server event xAPI Converter"""
+import base64
 
+from argon2.exceptions import HashingError
+from argon2.low_level import Type, hash_secret_raw
+
+from ralph.defaults import (
+    XAPI_ANONYMIZATION_HASH_LENGTH,
+    XAPI_ANONYMIZATION_MEMORY_COST,
+    XAPI_ANONYMIZATION_PARALLELISM,
+    XAPI_ANONYMIZATION_SALT,
+    XAPI_ANONYMIZATION_TIME_COST,
+)
 from ralph.schemas.edx.converters.base_converter import GetFromField
 from ralph.schemas.edx.server_event import ServerEventSchema
 
+from ..base_converter import ConversionException
 from . import constants as const
 from .base import BaseXapiConverter
 
 
 class ServerEventToXapi(BaseXapiConverter):
-    """Converts a common edx server event to xAPI
-    See ServerEventSchema for info about the Edx server event
+    """Converts a common edX server event to xAPI
+    See ServerEventSchema for info about the edX server event
     Example Statement: John viewed https://www.fun-mooc.fr/ Web page
     """
 
@@ -21,7 +33,8 @@ class ServerEventToXapi(BaseXapiConverter):
             "account": {
                 "name": GetFromField(
                     "context>user_id",
-                    lambda user_id: str(user_id) if user_id else "student",
+                    # pylint: disable=unnecessary-lambda
+                    lambda user_id: ServerEventToXapi.transform_user_id(user_id),
                 ),
                 "homePage": lambda: BaseXapiConverter._platform,
             },
@@ -49,7 +62,7 @@ class ServerEventToXapi(BaseXapiConverter):
                     "context>course_user_tags",
                     lambda course_user_tags: course_user_tags
                     if course_user_tags
-                    else {},
+                    else None,
                 ),
                 const.XAPI_EXTENSION_HOST: GetFromField("host"),
                 const.XAPI_EXTENSION_IP: GetFromField("ip"),
@@ -60,3 +73,33 @@ class ServerEventToXapi(BaseXapiConverter):
         },
         "timestamp": GetFromField("time"),
     }
+
+    @staticmethod
+    def transform_user_id(user_id):
+        """Transforms edX context>user_id for xAPI actor>account>name"""
+        if not user_id:
+            return "student"
+        if not BaseXapiConverter._anonymize:
+            return str(user_id)
+        try:
+            hashed_user_id = hash_secret_raw(
+                bytes(str(user_id), "utf-8"),
+                bytes(XAPI_ANONYMIZATION_SALT, "utf-8"),
+                time_cost=XAPI_ANONYMIZATION_TIME_COST,
+                memory_cost=XAPI_ANONYMIZATION_MEMORY_COST,
+                parallelism=XAPI_ANONYMIZATION_PARALLELISM,
+                hash_len=XAPI_ANONYMIZATION_HASH_LENGTH,
+                type=Type.D,
+            )
+        except HashingError as err:
+            raise ConversionException(str(err)) from err
+        missing_padding = len(hashed_user_id) % 4
+        if missing_padding:
+            hashed_user_id += b"=" * (4 - missing_padding)
+        base64_user_id = base64.b64encode(hashed_user_id).decode("utf-8")
+        return "".join(
+            [
+                base64_user_id[x]
+                for x in BaseXapiConverter._anonymization_hash_slice_indexes
+            ]
+        )

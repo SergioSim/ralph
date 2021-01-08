@@ -1,20 +1,25 @@
-"""Tests for the server event xapi converter"""
+"""Tests for the server event xAPI converter"""
 
 import json
 
 import pytest
 
-from ralph.schemas.edx.converters.xapi.base import BaseXapiConverter
-from ralph.schemas.edx.converters.xapi.server_event_to_xapi import ServerEventToXapi
-from ralph.schemas.edx.server_event import ServerEventSchema
+from ralph.schemas.edx.converters.xapi.server_event_to_xapi import (
+    BaseXapiConverter,
+    ServerEventToXapi,
+)
 
 from tests.fixtures.logs import EventType
 
-SCHEMA = ServerEventSchema()
-CONVERTER = ServerEventToXapi()
 PLATFORM = "https://www.fun-mooc.fr"
-BaseXapiConverter._platform = PLATFORM  # pylint: disable=protected-access
-CONVERTER.init_flat_conversion_array()
+CONVERTER = ServerEventToXapi()
+
+
+def setup_module():
+    """Setup any state specific to the execution of the given module."""
+    BaseXapiConverter._platform = PLATFORM  # pylint: disable=protected-access
+    BaseXapiConverter._anonymize = False  # pylint: disable=protected-access
+    CONVERTER.init_flat_conversion_array()
 
 
 def test_converting_invalid_server_event_should_return_none(event):
@@ -26,19 +31,36 @@ def test_converting_invalid_server_event_should_return_none(event):
 
 
 @pytest.mark.parametrize("user_id", [None, "", 123])
-def test_server_xapi_converter_returns_actor_timestamp_and_context(event, user_id):
+@pytest.mark.parametrize("course_user_tags", [None, {}, {"some_key": "some_value"}])
+def test_server_xapi_converter_returns_actor_timestamp_and_context(
+    event, user_id, course_user_tags
+):
     """Test that ServerEventToXapi returns actor, timestamp and context"""
 
-    server_event = event(EventType.SERVER, context_args={"user_id": user_id})
-    xapi_event_str = CONVERTER.convert(server_event)
-    xapi_event = json.loads(xapi_event_str)
-    user_id = user_id if user_id else "student"
+    # Generate event
+    context_args = {
+        "user_id": user_id,
+        "course_user_tags": {} if course_user_tags is None else course_user_tags,
+    }
+    server_event = event(EventType.SERVER, context_args=context_args)
+
+    # Remove course_user_tags when it's set to None
+    expected_course_user_tags = {
+        "https://www.edx.org/extension/course_user_tags": course_user_tags,
+    }
+    if course_user_tags is None:
+        del server_event["context"]["course_user_tags"]
+        expected_course_user_tags = {}
+    if not course_user_tags:
+        expected_course_user_tags = {}
+
+    # Convert event to xAPI
+    xapi_event = json.loads(CONVERTER.convert(server_event))
+    user_id = str(user_id) if user_id else "student"
     assert xapi_event["actor"]["objectType"] == "Agent"
-    assert xapi_event["actor"]["account"]["name"] == str(user_id)
+    assert xapi_event["actor"]["account"]["name"] == user_id
     assert xapi_event["actor"]["account"]["homePage"] == PLATFORM
     assert xapi_event["timestamp"] == server_event["time"]
-    course_user_tags = server_event["context"].get("course_user_tags", {})
-
     assert xapi_event["context"] == {
         "extensions": {
             "https://www.edx.org/extension/accept_language": server_event[
@@ -48,7 +70,7 @@ def test_server_xapi_converter_returns_actor_timestamp_and_context(event, user_i
             "https://www.edx.org/extension/course_id": server_event["context"][
                 "course_id"
             ],
-            "https://www.edx.org/extension/course_user_tags": course_user_tags,
+            **expected_course_user_tags,
             "https://www.edx.org/extension/host": server_event["host"],
             "https://www.edx.org/extension/ip": server_event["ip"],
             "https://www.edx.org/extension/org_id": server_event["context"]["org_id"],
