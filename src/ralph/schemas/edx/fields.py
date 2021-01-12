@@ -5,6 +5,7 @@ from ipaddress import IPv4Address
 from marshmallow import ValidationError
 from marshmallow.fields import Field
 
+
 class IPv4AddressField(Field):
     """IPv4 Address that serializes to a string of numbers and deserializes
     to a IPv4Address object.

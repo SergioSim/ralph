@@ -1,6 +1,6 @@
 """Base Xapi Converter"""
 
-from ralph.schemas.edx.converters.base_converter import BaseConverter
+from ralph.schemas.edx.converters.base import BaseConverter
 
 
 class BaseXapiConverter(BaseConverter):

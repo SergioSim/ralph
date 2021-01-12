@@ -5,7 +5,7 @@ import logging
 from enum import Enum
 
 from ralph.defaults import XAPI_ANONYMIZATION_HASH_SLICE_INDEXES
-from ralph.schemas.edx.converters.base_converter import ConversionException
+from ralph.schemas.edx.converters.base import ConversionException
 
 from .xapi.base import BaseXapiConverter
 from .xapi.server_event_to_xapi import ServerEventToXapi

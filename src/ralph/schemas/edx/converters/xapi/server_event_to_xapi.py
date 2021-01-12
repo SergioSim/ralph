@@ -11,10 +11,10 @@ from ralph.defaults import (
     XAPI_ANONYMIZATION_SALT,
     XAPI_ANONYMIZATION_TIME_COST,
 )
-from ralph.schemas.edx.converters.base_converter import GetFromField
+from ralph.schemas.edx.converters.base import GetFromField
 from ralph.schemas.edx.server_event import ServerEventSchema
 
-from ..base_converter import ConversionException
+from ..base import ConversionException
 from . import constants as const
 from .base import BaseXapiConverter
 

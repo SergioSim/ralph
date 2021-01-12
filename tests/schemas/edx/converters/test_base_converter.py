@@ -6,7 +6,7 @@ import pytest
 from marshmallow import Schema
 
 from ralph.schemas.edx.base import ContextModuleSchema, ContextSchema
-from ralph.schemas.edx.converters.base_converter import (
+from ralph.schemas.edx.converters.base import (
     BaseConverter,
     GetFromField,
     nested_get,

@@ -97,9 +97,6 @@ class ContextSchema(BaseContextSchema):
             )
 
 
-
-
-
 class BaseEventSchema(Schema):
     """Represents the Base Event Schema all events inherit from.
     Does not define event and event_type fields

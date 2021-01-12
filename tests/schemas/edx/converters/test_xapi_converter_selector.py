@@ -8,7 +8,7 @@ from io import StringIO
 import pytest
 
 import ralph.defaults
-from ralph.schemas.edx.converters.base_converter import ConversionException
+from ralph.schemas.edx.converters.base import ConversionException
 from ralph.schemas.edx.converters.xapi_converter_selector import XapiConverterSelector
 
 PLATFORM = "https://fun-mooc.fr"
