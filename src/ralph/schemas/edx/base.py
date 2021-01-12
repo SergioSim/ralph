@@ -89,7 +89,7 @@ class ContextSchema(BaseContextSchema):
             f"{data['module']['usage_key']}/"
             f"handler/"
         )
-        if path[: len(valid_path)] != valid_path:
+        if not path.startswith(valid_path):
             raise ValidationError(
                 f"path should start with: "
                 f"{valid_path} "
