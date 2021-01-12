@@ -131,7 +131,7 @@ class BaseEventSchema(Schema):
 
         if len(value) == 1 or len(value) > 30:
             raise ValidationError(
-                "username should be empty or between 2 and 30 chars long"
+                "username should be empty or between 2 and 30 characters long"
             )
 
     @validates("referer")
