@@ -1,10 +1,10 @@
 """Base event schema definitions"""
 
-from ipaddress import IPv4Address
-
 from marshmallow import Schema, ValidationError, validates, validates_schema
 from marshmallow.fields import DateTime, Dict, Field, Nested, Str, Url
 from marshmallow.validate import URL, Equal
+
+from .fields import IPv4AddressField
 
 # pylint: disable=no-self-use, unused-argument
 
@@ -97,23 +97,7 @@ class ContextSchema(BaseContextSchema):
             )
 
 
-class IPv4AddressField(Field):
-    """IPv4 Address that serializes to a string of numbers and deserializes
-    to a IPv4Address object.
-    """
 
-    def _serialize(self, value, attr, obj, **kwargs):
-        if not value:
-            return ""
-        return value.exploded
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        if not value:
-            return ""
-        try:
-            return IPv4Address(value)
-        except ValueError as error:
-            raise ValidationError("Invalid IPv4 Address") from error
 
 
 class BaseEventSchema(Schema):
@@ -159,7 +143,7 @@ class BaseEventSchema(Schema):
 
     @staticmethod
     def get_course_key(data):
-        """Return the course key: organization+course+sesssion"""
+        """Return the course key: organization+course+session"""
 
         return data["context"]["course_id"][10:]
 
