@@ -4,22 +4,12 @@ import json
 
 import pytest
 
-from ralph.schemas.edx.converters.xapi.server_event_to_xapi import (
-    BaseXapiConverter,
-    ServerEventToXapi,
-)
+from ralph.schemas.edx.converters.xapi.server_event_to_xapi import ServerEventToXapi
 
 from tests.fixtures.logs import EventType
 
 PLATFORM = "https://www.fun-mooc.fr"
-CONVERTER = ServerEventToXapi()
-
-
-def setup_module():
-    """Setup any state specific to the execution of the given module."""
-    BaseXapiConverter._platform = PLATFORM  # pylint: disable=protected-access
-    BaseXapiConverter._anonymize = False  # pylint: disable=protected-access
-    CONVERTER.init_flat_conversion_array()
+CONVERTER = ServerEventToXapi(PLATFORM, False, None)
 
 
 def test_converting_invalid_server_event_should_return_none(event):

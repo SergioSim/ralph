@@ -11,6 +11,7 @@ import pytest
 from tincan import Statement
 
 import ralph.defaults
+from ralph.schemas.edx.converters.xapi.base import BaseXapiConverter
 from ralph.schemas.edx.converters.xapi_converter_selector import (
     Converters,
     XapiConverterSelector,
@@ -31,22 +32,21 @@ def statements(request, monkeypatch):
     """Prepare CONVERTOR_STATEMENTS for parametrized tests"""
 
     converter = request.param[0]
+    events = request.param[1]
     if converter in CONVERTER_STATEMENTS:
         return CONVERTER_STATEMENTS[converter]
 
     monkeypatch.setattr(
         ralph.defaults, "XAPI_ANONYMIZATION_SALT", "somesaltisnottooshort!"
     )
-    monkeypatch.setattr(
-        ralph.defaults, "XAPI_ANONYMIZATION_HASH_SLICE_INDEXES", "1,2,4,10"
-    )
-    converter_module = inspect.getmodule(converter.value)
-    converter_selector_module = inspect.getmodule(XapiConverterSelector)
-    importlib.reload(converter_module)
-    importlib.reload(converter_selector_module)
+    monkeypatch.setattr(ralph.defaults, "XAPI_ANONYMIZATION_HASH_INDEXES", "1,2,4,10")
+    # Reload modules that depend on XAPI_ANONYMIZATION_SALT / XAPI_ANONYMIZATION_HASH_INDEXES
+    importlib.reload(inspect.getmodule(BaseXapiConverter))
+    importlib.reload(inspect.getmodule(XapiConverterSelector))
+
     with StringIO() as file:
         # Write events to file
-        for event in request.param[1]:
+        for event in events:
             file.write(f"{json.dumps(event)}\n")
         file.seek(0)
         # Convert, deserialize and store events from file in converted_events list
@@ -72,9 +72,10 @@ def test_each_converter_should_have_corresponding_events():
         assert converter in converter_event_dict
         assert len(converter_event_dict[converter]) == EVENT_COUNT
         for event in converter_event_dict[converter]:
-            CONVERTER.event = event
+            converter_selector = XapiConverterSelector(PLATFORM, False)
+            converter_selector.event = event
             # pylint: disable=protected-access
-            assert isinstance(CONVERTER._select_converter(), type(converter.value))
+            assert isinstance(converter_selector._select_converter(), converter.value)
 
 
 @pytest.mark.parametrize(

@@ -4,10 +4,9 @@ import json
 import logging
 from enum import Enum
 
-from ralph.defaults import XAPI_ANONYMIZATION_HASH_SLICE_INDEXES
-from ralph.schemas.edx.converters.base import ConversionException
+from ralph.defaults import XAPI_ANONYMIZATION_HASH_INDEXES
+from ralph.exceptions import ConversionException
 
-from .xapi.base import BaseXapiConverter
 from .xapi.server_event_to_xapi import ServerEventToXapi
 
 # converters module logger
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 class Converters(Enum):
     """Stores initialized xAPI converters"""
 
-    SERVER = ServerEventToXapi()
+    SERVER = ServerEventToXapi
 
 
 class XapiConverterSelector:
@@ -33,15 +32,11 @@ class XapiConverterSelector:
         """
 
         self.event = None
-        BaseXapiConverter._platform = platform
-        BaseXapiConverter._anonymize = anonymize
-        if anonymize:
-            BaseXapiConverter._anonymization_hash_slice_indexes = (
-                self._get_anonymization_hash_slice_indexes()
-            )
-
-        for converter in Converters:
-            converter.value.init_flat_conversion_array()
+        anonymization_indexes = self._get_anonymization_indexes(anonymize)
+        self.converters = {
+            converter: converter.value(platform, anonymize, anonymization_indexes)
+            for converter in Converters
+        }
 
     def convert(self, input_file):
         """Uses a matching xAPI converter to validate and return the converted event"""
@@ -84,22 +79,24 @@ class XapiConverterSelector:
             self._log_error("Invalid event! Context not a dictionary!")
             return None
         if event_type == context.get("path", None):
-            return Converters.SERVER.value
+            return self.converters[Converters.SERVER]
         self._log_error("No matching server xAPI converter found!")
         return None
 
     @staticmethod
-    def _get_anonymization_hash_slice_indexes():
-        anonymization_hash_slice_indexes = []
-        for index in XAPI_ANONYMIZATION_HASH_SLICE_INDEXES.split(","):
+    def _get_anonymization_indexes(anonymize):
+        if not anonymize:
+            return None
+        anonymization_hash_indexes = []
+        for index in XAPI_ANONYMIZATION_HASH_INDEXES.split(","):
             try:
-                anonymization_hash_slice_indexes.append(int(index))
+                anonymization_hash_indexes.append(int(index))
             except ValueError as err:
                 raise ConversionException(
-                    "The RALPH_XAPI_ANONYMIZATION_HASH_SLICE_INDEXES environment variable "
+                    "The RALPH_XAPI_ANONYMIZATION_HASH_INDEXES environment variable "
                     "should consist of a comma separated sequence of integers"
                 ) from err
-        return anonymization_hash_slice_indexes
+        return anonymization_hash_indexes
 
     def _log_error(self, message):
         logger.error(message)

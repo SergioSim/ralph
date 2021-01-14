@@ -17,3 +17,7 @@ class EventKeyError(Exception):
 
 class UnsupportedBackendException(Exception):
     """Raised when trying to use an unsupported backend type"""
+
+
+class ConversionException(Exception):
+    """Raised when it's not possible to convert an event"""
