@@ -4,9 +4,10 @@ import datetime
 import inspect
 import logging
 import sys
+from io import BytesIO
 
 from swiftclient.exceptions import ClientException
-from swiftclient.service import SwiftError, SwiftService
+from swiftclient.service import SwiftError, SwiftService, SwiftUploadObject
 
 from ralph.defaults import (
     SWIFT_OS_AUTH_URL,
@@ -80,9 +81,9 @@ class SwiftStorage(HistoryMixin, BaseStorage):
             # pylint: disable=protected-access
             if option is not None and not isinstance(option, inspect._empty):
                 continue
-            raise BackendParameterException(
-                f"SwiftStorage backend instance requires the `{option_name}` option to be set."
-            )
+            msg = "SwiftStorage backend instance requires the %s option to be set."
+            logger.error(msg, option_name)
+            raise BackendParameterException(msg % option_name)
 
     @throws_swift_error
     def list(self, details=False, new=False):
@@ -150,12 +151,13 @@ class SwiftStorage(HistoryMixin, BaseStorage):
                 swift.download(container=self.container, objects=[name], **options)
             )
             if "contents" not in download:
+                msg = "Failed to download %s, %s"
+                logger.error(msg, download["object"], download["error"])
                 raise BackendParameterException(
-                    f"Failed to download {download['object']}, {download['error']}"
+                    msg % (download["object"], download["error"])
                 )
             size = 0
             for chunk in download["contents"]:
-                logger.debug("Chunk %s", len(chunk))
                 size += len(chunk)
                 sys.stdout.buffer.write(chunk)
 
@@ -177,3 +179,48 @@ class SwiftStorage(HistoryMixin, BaseStorage):
     @throws_swift_error
     def write(self, name, chunk_size=4096, overwrite=False):
         """Write content to the `name` target"""
+
+        if not overwrite and name in list(self.list()):
+            msg = "%s already exists and overwrite is not allowed"
+            logger.error(msg, name)
+            raise FileExistsError(msg % name)
+
+        logger.debug("Creating archive: %s", name)
+
+        tmp_file = BytesIO()
+        size = 0
+        while chunk := sys.stdin.read(chunk_size):
+            data = bytes(chunk, "utf-8")
+            size += len(data)
+            tmp_file.write(data)
+        tmp_file.seek(0)
+
+        logger.debug("Finished reading %s bytes, Uploading now", size)
+
+        swift_object = SwiftUploadObject(tmp_file, object_name=name)
+        with SwiftService(options=self.options) as swift:
+            for upload in swift.upload(
+                container=self.container, objects=[swift_object]
+            ):
+                if not upload["success"]:
+                    object_key = "object" if "object" in upload else "for_object"
+                    msg = "Failed to upload %s, %s"
+                    logger.error(msg, upload[object_key], upload["error"])
+                    raise BackendParameterException(
+                        msg % (upload[object_key], upload["error"])
+                    )
+
+        # Archive is supposed to have been fully created, add a new entry to
+        # the history.
+        self.append_to_history(
+            {
+                "backend": self.name,
+                "command": "push",
+                "id": self._get_histrory_id(name),
+                "filename": name,
+                "size": size,
+                "pushed_at": datetime.datetime.now(
+                    tz=datetime.timezone.utc
+                ).isoformat(),
+            }
+        )
