@@ -1,5 +1,6 @@
 """Backend mixins for Ralph"""
 
+import datetime
 import json
 import logging
 
@@ -53,3 +54,9 @@ class HistoryMixin:
         """Append event to history"""
 
         self.write_history(self.history + [event])
+
+    @staticmethod
+    def get_current_iso_time():
+        """Return the current UTC time in ISO format"""
+
+        return datetime.datetime.now(tz=datetime.timezone.utc).isoformat()

@@ -1,10 +1,8 @@
 """Swift storage backend for Ralph"""
 
-import datetime
 import inspect
 import logging
 import sys
-from io import BytesIO
 
 from swiftclient.exceptions import ClientException
 from swiftclient.service import SwiftError, SwiftService, SwiftUploadObject
@@ -58,7 +56,6 @@ class SwiftStorage(HistoryMixin, BaseStorage):
     ):
         """Setup options for the SwiftService"""
 
-        self.container = os_storage_url.split("/")[-1]
         self.options = {
             "os_auth_url": os_auth_url,
             "os_identity_api_version": os_identity_api_version,
@@ -69,9 +66,13 @@ class SwiftStorage(HistoryMixin, BaseStorage):
             "os_username": os_username,
             "os_password": os_password,
             "os_region_name": os_region_name,
-            "os_storage_url": os_storage_url.replace(f"/{self.container}", ""),
+            "os_storage_url": os_storage_url,
         }
         self._check_options()
+        self.container = os_storage_url.split("/")[-1]
+        self.options["os_storage_url"] = os_storage_url.replace(
+            f"/{self.container}", ""
+        )
 
     def _check_options(self):
         """Verify that all options are not None nor empty"""
@@ -81,49 +82,26 @@ class SwiftStorage(HistoryMixin, BaseStorage):
             # pylint: disable=protected-access
             if option is not None and not isinstance(option, inspect._empty):
                 continue
-            msg = "SwiftStorage backend instance requires the %s option to be set."
+            msg = "SwiftStorage backend instance requires the %s option to be set"
             logger.error(msg, option_name)
             raise BackendParameterException(msg % option_name)
 
     @throws_swift_error
     def list(self, details=False, new=False):
-        """List files in the storage backend
-
-        With details set to False we return only the names of the files.
-        Example:
-            2020-04-29.gz
-            2020-04-30.gz
-            2020-05-01.gz
-
-        With details set to True we return JSON objects with more meta data.
-        Example:
-            {
-                "bytes": 459,
-                "last_modified": "2021-01-20T10:41:03.950030",
-                "hash": "b10a8db164e0754105b7a99be72e3fe5",
-                "name": "2020-04-29.gz",
-                "content_type": "application/gzip"
-            }
-        """
+        """List files in the storage backend"""
 
         archives_to_skip = set()
         if new:
-            fetched_from_swift = (
-                lambda e: e["backend"] == self.name and e["command"] == "fetch"
-            )
-            for entry in filter(fetched_from_swift, self.history):
+            for entry in filter(self.fetched_from_backend, self.history):
                 archives_to_skip.add(entry["id"])
-        with SwiftService(options=self.options) as swift:
-            for page in swift.list(container=self.container):
+        with SwiftService(self.options) as swift:
+            for page in swift.list(self.container):
                 if not page["success"]:
                     msg = "Failed to list container %s: %s"
                     logger.error(msg, page["container"], page["error"])
                     continue
                 for archive in page["listing"]:
-                    if (
-                        new
-                        and self._get_histrory_id(archive["name"]) in archives_to_skip
-                    ):
+                    if new and archive["name"] in archives_to_skip:
                         continue
                     yield archive if details else archive["name"]
 
@@ -133,52 +111,39 @@ class SwiftStorage(HistoryMixin, BaseStorage):
         # What's the purpose of this function ? Seems not used anywhere.
         return f"{self.options.get('os_storage_url')}/{name}"
 
-    def _get_histrory_id(self, name):
-        return f"{self.container}/{name}"
-
     @throws_swift_error
     def read(self, name, chunk_size=None):
-        """Read `name` file and stream its content by chunks of (max) 2 ** 16
-        Not 100% sure why 2 ** 16 but may be because swift.service.py line 54 is:
-            DISK_BUFFER = 2 ** 16 (TODO: Check this to be sure)
+        """Read `name` object and stream its content in chunks of (max) 2 ** 16
+
+        Why chunks of (max) 2 ** 16 ?
+            Because SwiftService opens a file to stream the object into:
+            See swiftclient.service.py:2082 open(filename, 'rb', DISK_BUFFER)
+            Where filename = "/dev/stdout" and DISK_BUFFER = 2 ** 16
         """
 
         logger.debug("Getting archive: %s", name)
 
-        with SwiftService(options=self.options) as swift:
-            options = {"options": {"out_file": "-"}}
-            download = next(
-                swift.download(container=self.container, objects=[name], **options)
-            )
-            if "contents" not in download:
-                msg = "Failed to download %s, %s"
-                logger.error(msg, download["object"], download["error"])
-                raise BackendParameterException(
-                    msg % (download["object"], download["error"])
-                )
-            size = 0
-            for chunk in download["contents"]:
-                size += len(chunk)
-                sys.stdout.buffer.write(chunk)
+        options = {"options": {"out_file": "/dev/stdout"}}
+        with SwiftService(self.options) as swift:
+            download = next(swift.download(self.container, [name], **options))
+        if not download["success"]:
+            logger.error(download["error"])
+            return
 
-            # Archive is supposed to have been fully fetched, add a new entry to
-            # the history.
-            self.append_to_history(
-                {
-                    "backend": self.name,
-                    "command": "fetch",
-                    "id": self._get_histrory_id(name),
-                    "filename": name,
-                    "size": size,
-                    "fetched_at": datetime.datetime.now(
-                        tz=datetime.timezone.utc
-                    ).isoformat(),
-                }
-            )
+        # Archive fetched, add a new entry to the history
+        self.append_to_history(
+            {
+                "backend": self.name,
+                "command": "fetch",
+                "id": name,
+                "size": download["read_length"],
+                "fetched_at": self.get_current_iso_time(),
+            }
+        )
 
     @throws_swift_error
-    def write(self, name, chunk_size=4096, overwrite=False):
-        """Write content to the `name` target"""
+    def write(self, name, chunk_size=None, overwrite=False):
+        """Write content to the `name` target in chunks of (max) 2 ** 16"""
 
         if not overwrite and name in list(self.list()):
             msg = "%s already exists and overwrite is not allowed"
@@ -187,40 +152,19 @@ class SwiftStorage(HistoryMixin, BaseStorage):
 
         logger.debug("Creating archive: %s", name)
 
-        tmp_file = BytesIO()
-        size = 0
-        while chunk := sys.stdin.read(chunk_size):
-            data = bytes(chunk, "utf-8")
-            size += len(data)
-            tmp_file.write(data)
-        tmp_file.seek(0)
-
-        logger.debug("Finished reading %s bytes, Uploading now", size)
-
-        swift_object = SwiftUploadObject(tmp_file, object_name=name)
-        with SwiftService(options=self.options) as swift:
-            for upload in swift.upload(
-                container=self.container, objects=[swift_object]
-            ):
+        swift_object = SwiftUploadObject(sys.stdin.buffer, object_name=name)
+        with SwiftService(self.options) as swift:
+            for upload in swift.upload(self.container, [swift_object]):
                 if not upload["success"]:
-                    object_key = "object" if "object" in upload else "for_object"
-                    msg = "Failed to upload %s, %s"
-                    logger.error(msg, upload[object_key], upload["error"])
-                    raise BackendParameterException(
-                        msg % (upload[object_key], upload["error"])
-                    )
+                    logger.error(upload["error"])
+                    raise BackendParameterException(upload["error"])
 
-        # Archive is supposed to have been fully created, add a new entry to
-        # the history.
+        # Archive written, add a new entry to the history
         self.append_to_history(
             {
                 "backend": self.name,
                 "command": "push",
-                "id": self._get_histrory_id(name),
-                "filename": name,
-                "size": size,
-                "pushed_at": datetime.datetime.now(
-                    tz=datetime.timezone.utc
-                ).isoformat(),
+                "id": name,
+                "pushed_at": self.get_current_iso_time(),
             }
         )
