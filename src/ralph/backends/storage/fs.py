@@ -61,10 +61,7 @@ class FSStorage(HistoryMixin, BaseStorage):
         if new:
             archives = set(archives) - set(
                 entry.get("id")
-                for entry in filter(
-                    lambda e: e["backend"] == self.name and e["command"] == "fetch",
-                    self.history,
-                )
+                for entry in filter(self.fetched_from_backend, self.history)
             )
 
             logger.debug("New archives: %d", len(archives))
@@ -96,9 +93,7 @@ class FSStorage(HistoryMixin, BaseStorage):
                 "id": name,
                 "filename": details.get("filename"),
                 "size": details.get("size"),
-                "fetched_at": datetime.datetime.now(
-                    tz=datetime.timezone.utc
-                ).isoformat(),
+                "fetched_at": self.get_current_iso_time(),
             }
         )
 
@@ -127,8 +122,6 @@ class FSStorage(HistoryMixin, BaseStorage):
                 "id": name,
                 "filename": details.get("filename"),
                 "size": details.get("size"),
-                "pushed_at": datetime.datetime.now(
-                    tz=datetime.timezone.utc
-                ).isoformat(),
+                "pushed_at": self.get_current_iso_time(),
             }
         )
