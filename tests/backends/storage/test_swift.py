@@ -31,7 +31,7 @@ SWIFT_OPTIONS = {
     "os_region_name": "RegionOne",
     "os_storage_url": None,
     "os_user_domain_name": "Default",
-    "os_project_domain_name": "default",
+    "os_project_domain_name": "Default",
     "os_auth_url": "http://swift:35357/v3/",
     "os_identity_api_version": "3",
 }
@@ -96,7 +96,7 @@ def setup_module(module):  # pylint:disable=unused-argument
             },
             "scope": {
                 "project": {
-                    "domain": {"id": SWIFT_OPTIONS["os_project_domain_name"]},
+                    "domain": {"id": "default"},
                     "name": "test",
                 }
             },
@@ -104,9 +104,16 @@ def setup_module(module):  # pylint:disable=unused-argument
     }
     headers = {"Content-Type": "application/json"}
     # Authenticate with keystone
-    auth_response = requests.post(
-        keystone_v3_auth_url, json=valid_v3_auth_data, headers=headers
-    )
+    try:
+        auth_response = requests.post(
+            keystone_v3_auth_url, json=valid_v3_auth_data, headers=headers
+        )
+    except requests.exceptions.RequestException:
+        SWIFT_OPTIONS["os_auth_url"] = "http://localhost:35357/v3/"
+        keystone_v3_auth_url = SWIFT_OPTIONS["os_auth_url"] + "auth/tokens"
+        auth_response = requests.post(
+            keystone_v3_auth_url, json=valid_v3_auth_data, headers=headers
+        )
     assert auth_response.status_code == 201
     AUTH_TOKEN_HEADER["X-Auth-Token"] = auth_response.headers["X-Subject-Token"]
     auth_tenant_url = auth_response.json()["token"]["catalog"][-1]["endpoints"][-1][
@@ -118,9 +125,17 @@ def setup_module(module):  # pylint:disable=unused-argument
         "os_storage_url"
     ] = f"http://swift:8080/v1/{auth_tenant}/demo_container"
     # Create container in SWIFT
-    swift_response = requests.put(
-        SWIFT_OPTIONS["os_storage_url"], headers=AUTH_TOKEN_HEADER
-    )
+    try:
+        swift_response = requests.put(
+            SWIFT_OPTIONS["os_storage_url"], headers=AUTH_TOKEN_HEADER
+        )
+    except requests.exceptions.RequestException:
+        SWIFT_OPTIONS[
+            "os_storage_url"
+        ] = f"http://localhost:8080/v1/{auth_tenant}/demo_container"
+        swift_response = requests.put(
+            SWIFT_OPTIONS["os_storage_url"], headers=AUTH_TOKEN_HEADER
+        )
     assert swift_response.status_code in (201, 202)
 
 
@@ -156,94 +171,6 @@ def setup_swift_environment(monkeypatch):
     monkeypatch.setenv("RALPH_SWIFT_OS_TENANT_ID", SWIFT_OPTIONS["os_tenant_id"])
     monkeypatch.setenv("RALPH_SWIFT_OS_TENANT_NAME", SWIFT_OPTIONS["os_tenant_name"])
     monkeypatch.setenv("RALPH_SWIFT_OS_STORAGE_URL", SWIFT_OPTIONS["os_storage_url"])
-
-
-def test_command_usage(monkeypatch, fs):  # pylint: disable=invalid-name
-    """Test a common command usage scenario (list/push/fetch) with swift backend"""
-
-    setup_swift_environment(monkeypatch)
-    fs.create_file(HISTORY_FILE, contents=json.dumps([]))
-    fs.create_file("/dev/stdout")
-    runner = CliRunner()
-
-    # When we list an empty container, there is no output
-    result = runner.invoke(cli, ["-v", "ERROR", "list", "-b", "swift"])
-    assert result.exit_code == 0
-    assert result.output == ""
-
-    # When we fetch an non existing object, we get an error message
-    result = runner.invoke(
-        cli, ["-v", "ERROR", "fetch", "-b", "swift", "not_existing_object"]
-    )
-    assert result.exit_code == 0
-    assert "not_existing_object 404 Not Found" in result.output
-
-    # When we push a new object, it appears in the next list command
-    # And we can retrieve it with the fetch command
-    result = runner.invoke(
-        cli, ["-v", "ERROR", "push", "-b", "swift", SWIFT_OBJECT], input="some content"
-    )
-    assert result.exit_code == 0
-    assert result.output == ""
-
-    # We should see the new_object in the list
-    result = runner.invoke(cli, ["-v", "ERROR", "list", "-b", "swift"])
-    assert result.exit_code == 0
-    assert result.output == SWIFT_OBJECT + "\n"
-    # Same output with the new option (we haven't fetched the object before)
-    result = runner.invoke(cli, ["-v", "ERROR", "list", "-b", "swift", "-n"])
-    assert result.exit_code == 0
-    assert result.output == SWIFT_OBJECT + "\n"
-    # With the details option we should see more details
-    result = runner.invoke(cli, ["-v", "ERROR", "list", "-b", "swift", "--details"])
-    assert result.exit_code == 0
-    json_output = json.loads(result.output)
-    assert json_output["bytes"] == 12
-    assert json_output["name"] == SWIFT_OBJECT
-    assert json_output["content_type"] == "application/octet-stream"
-    assert json_output["hash"] == hashlib.md5(b"some content").hexdigest()
-    assert "last_modified" in json_output
-    # We should get the objects content with fetch
-    result = runner.invoke(cli, ["-v", "ERROR", "fetch", "-b", "swift", SWIFT_OBJECT])
-    assert result.exit_code == 0
-    # It's not in result.output this time as we write directly to /dev/stdout
-    with open("/dev/stdout", "r") as file:
-        assert file.read() == "some content"
-    # And now if we retrieve the list of new objects the list should be empty
-    # Because we already had fetched the object before
-    result = runner.invoke(cli, ["-v", "ERROR", "list", "-b", "swift", "-n"])
-    assert result.exit_code == 0
-    assert result.output == ""
-
-    # When we try to overwrite an existing object without setting the -f option
-    # we get an error
-    result = runner.invoke(
-        cli,
-        ["-v", "ERROR", "push", "-b", "swift", SWIFT_OBJECT],
-        input="overwritten content",
-    )
-    assert result.exit_code == 1
-    assert (
-        f"{SWIFT_OBJECT} already exists and overwrite is not allowed" in result.output
-    )
-    # We should get it's original content with fetch
-    result = runner.invoke(cli, ["-v", "ERROR", "fetch", "-b", "swift", SWIFT_OBJECT])
-    assert result.exit_code == 0
-    with open("/dev/stdout", "r") as file:
-        assert file.read() == "some content"
-
-    # When we try to overwrite an existing object and set the -f option
-    # we should succeed
-    result = runner.invoke(
-        cli,
-        ["-v", "ERROR", "push", "-b", "swift", "-f", SWIFT_OBJECT],
-        input="overwritten content",
-    )
-    # We should get it's overwritten content with fetch
-    result = runner.invoke(cli, ["-v", "ERROR", "fetch", "-b", "swift", SWIFT_OBJECT])
-    assert result.exit_code == 0
-    with open("/dev/stdout", "r") as file:
-        assert file.read() == "overwritten content"
 
 
 def list_page(success=True):
@@ -458,3 +385,91 @@ def test_url_should_concatenate_the_storage_url_and_name(swift):
     """Check the url method returns `os_storage_url/name`"""
 
     assert swift.url("name") == "os_storage_url/name"
+
+
+def test_command_usage(monkeypatch, fs):  # pylint: disable=invalid-name
+    """Test a common command usage scenario (list/push/fetch) with swift backend"""
+
+    setup_swift_environment(monkeypatch)
+    fs.create_file(HISTORY_FILE, contents=json.dumps([]))
+    fs.create_file("/dev/stdout")
+    runner = CliRunner()
+
+    # When we list an empty container, there is no output
+    result = runner.invoke(cli, ["-v", "ERROR", "list", "-b", "swift"])
+    assert result.exit_code == 0
+    assert result.output == ""
+
+    # When we fetch an non existing object, we get an error message
+    result = runner.invoke(
+        cli, ["-v", "ERROR", "fetch", "-b", "swift", "not_existing_object"]
+    )
+    assert result.exit_code == 0
+    assert "not_existing_object 404 Not Found" in result.output
+
+    # When we push a new object, it appears in the next list command
+    # And we can retrieve it with the fetch command
+    result = runner.invoke(
+        cli, ["-v", "ERROR", "push", "-b", "swift", SWIFT_OBJECT], input="some content"
+    )
+    assert result.exit_code == 0
+    assert result.output == ""
+
+    # We should see the new_object in the list
+    result = runner.invoke(cli, ["-v", "ERROR", "list", "-b", "swift"])
+    assert result.exit_code == 0
+    assert result.output == SWIFT_OBJECT + "\n"
+    # Same output with the new option (we haven't fetched the object before)
+    result = runner.invoke(cli, ["-v", "ERROR", "list", "-b", "swift", "-n"])
+    assert result.exit_code == 0
+    assert result.output == SWIFT_OBJECT + "\n"
+    # With the details option we should see more details
+    result = runner.invoke(cli, ["-v", "ERROR", "list", "-b", "swift", "--details"])
+    assert result.exit_code == 0
+    json_output = json.loads(result.output)
+    assert json_output["bytes"] == 12
+    assert json_output["name"] == SWIFT_OBJECT
+    assert json_output["content_type"] == "application/octet-stream"
+    assert json_output["hash"] == hashlib.md5(b"some content").hexdigest()
+    assert "last_modified" in json_output
+    # We should get the objects content with fetch
+    result = runner.invoke(cli, ["-v", "ERROR", "fetch", "-b", "swift", SWIFT_OBJECT])
+    assert result.exit_code == 0
+    # It's not in result.output this time as we write directly to /dev/stdout
+    with open("/dev/stdout", "r") as file:
+        assert file.read() == "some content"
+    # And now if we retrieve the list of new objects the list should be empty
+    # Because we already had fetched the object before
+    result = runner.invoke(cli, ["-v", "ERROR", "list", "-b", "swift", "-n"])
+    assert result.exit_code == 0
+    assert result.output == ""
+
+    # When we try to overwrite an existing object without setting the -f option
+    # we get an error
+    result = runner.invoke(
+        cli,
+        ["-v", "ERROR", "push", "-b", "swift", SWIFT_OBJECT],
+        input="overwritten content",
+    )
+    assert result.exit_code == 1
+    assert (
+        f"{SWIFT_OBJECT} already exists and overwrite is not allowed" in result.output
+    )
+    # We should get it's original content with fetch
+    result = runner.invoke(cli, ["-v", "ERROR", "fetch", "-b", "swift", SWIFT_OBJECT])
+    assert result.exit_code == 0
+    with open("/dev/stdout", "r") as file:
+        assert file.read() == "some content"
+
+    # When we try to overwrite an existing object and set the -f option
+    # we should succeed
+    result = runner.invoke(
+        cli,
+        ["-v", "ERROR", "push", "-b", "swift", "-f", SWIFT_OBJECT],
+        input="overwritten content",
+    )
+    # We should get it's overwritten content with fetch
+    result = runner.invoke(cli, ["-v", "ERROR", "fetch", "-b", "swift", SWIFT_OBJECT])
+    assert result.exit_code == 0
+    with open("/dev/stdout", "r") as file:
+        assert file.read() == "overwritten content"

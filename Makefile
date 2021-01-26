@@ -5,7 +5,6 @@ DOCKER_GID           = $(shell id -g)
 DOCKER_USER          = $(DOCKER_UID):$(DOCKER_GID)
 COMPOSE              = DOCKER_USER=$(DOCKER_USER) docker-compose
 COMPOSE_RUN          = $(COMPOSE) run --rm
-COMPOSE_EXEC         = $(COMPOSE) exec
 COMPOSE_TEST_RUN     = $(COMPOSE_RUN)
 COMPOSE_TEST_RUN_APP = $(COMPOSE_TEST_RUN) app
 
@@ -30,8 +29,7 @@ bootstrap: \
   .env \
   build \
   dev \
-  es-index \
-  keystone
+  es-index
 .PHONY: bootstrap
 build: ## build the app container
 	@$(COMPOSE) build app
@@ -55,11 +53,6 @@ es-index: run
 	@echo "Creating $(ES_INDEX) index"
 	bin/es index $(ES_INDEX)
 .PHONY: es-index
-
-keystone:  ## Complete the keystone integration for swift storage
-	@echo 'Completing the keystone integration for swift storage'
-	@$(COMPOSE_EXEC) swift /swift/bin/register-swift-endpoint.sh http://127.0.0.1:49177
-.PHONY: keystone
 
 # Nota bene: Black should come after isort just in case they don't agree...
 lint: ## lint back-end python sources
