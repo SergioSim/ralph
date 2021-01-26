@@ -194,6 +194,7 @@ jobs:
       - run:
           name: Run tests
           command: |
+            sleep 10; \
             dockerize \
               -wait tcp://${HOSTNAME}:9200 \
               -timeout 60s \
