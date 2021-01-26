@@ -17,6 +17,7 @@ services:
       - .:/app
     depends_on:
       - elasticsearch
+      - swift
 
   elasticsearch:
     image: elasticsearch:7.10.1
@@ -24,6 +25,12 @@ services:
       discovery.type: single-node
     ports:
       - "9200:9200"
+  
+  swift:
+    image: jeantil/openstack-swift-keystone-docker:pike
+    ports:
+      - "49177:8080"
+      - "49178:35357"
 
   dockerize:
     image: jwilder/dockerize
