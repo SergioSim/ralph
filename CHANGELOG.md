@@ -8,11 +8,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Support for Swift storage backend
 
 ### Changed
 
 - Remove click_log package dependency
-- Support for Swift storage backend
 
 ## [1.0.0] - 2021-01-13
 

@@ -47,12 +47,17 @@ def es():
 
 @pytest.fixture
 def swift():
-    """Returns an instance of SwiftStorage"""
-    return SwiftStorage(
-        os_tenant_id="os_tenant_id",
-        os_tenant_name="os_tenant_name",
-        os_username="os_username",
-        os_password="os_password",
-        os_region_name="os_region_name",
-        os_storage_url="os_storage_url/ralph_logs_container",
-    )
+    """Returns an SwiftStorage generator"""
+
+    def swift_storage_generator():
+        """Returns an instance of SwiftStorage"""
+        return SwiftStorage(
+            os_tenant_id="os_tenant_id",
+            os_tenant_name="os_tenant_name",
+            os_username="os_username",
+            os_password="os_password",
+            os_region_name="os_region_name",
+            os_storage_url="os_storage_url/ralph_logs_container",
+        )
+
+    return swift_storage_generator

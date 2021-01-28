@@ -17,7 +17,6 @@ services:
       - .:/app
     depends_on:
       - elasticsearch
-      - swift
 
   elasticsearch:
     image: elasticsearch:7.10.1

@@ -7,6 +7,7 @@ import ovh
 import requests
 
 from ralph.exceptions import BackendParameterException
+from ralph.utils import now
 
 from ..mixins import HistoryMixin
 from .base import BaseStorage
@@ -98,10 +99,7 @@ class LDPStorage(HistoryMixin, BaseStorage):
         logger.debug("Found %d archives", len(archives))
 
         if new:
-            archives = set(archives) - set(
-                entry.get("id")
-                for entry in filter(self.fetched_from_backend, self.history)
-            )
+            archives = set(archives) - self.get_command_history(self.name, "fetch")
             logger.debug("New archives: %d", len(archives))
 
         for archive in archives:
@@ -130,7 +128,7 @@ class LDPStorage(HistoryMixin, BaseStorage):
                 "id": name,
                 "filename": details.get("filename"),
                 "size": details.get("size"),
-                "fetched_at": self.get_current_iso_time(),
+                "fetched_at": now(),
             }
         )
 

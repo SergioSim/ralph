@@ -1,11 +1,11 @@
 """Swift storage backend for Ralph"""
 
-import inspect
 import logging
 import sys
+from functools import cached_property
+from urllib.parse import urlparse
 
-from swiftclient.exceptions import ClientException
-from swiftclient.service import SwiftError, SwiftService, SwiftUploadObject
+from swiftclient.service import SwiftService, SwiftUploadObject
 
 from ralph.defaults import (
     SWIFT_OS_AUTH_URL,
@@ -13,7 +13,8 @@ from ralph.defaults import (
     SWIFT_OS_PROJECT_DOMAIN_NAME,
     SWIFT_OS_USER_DOMAIN_NAME,
 )
-from ralph.exceptions import BackendParameterException
+from ralph.exceptions import BackendException, BackendParameterException
+from ralph.utils import now
 
 from ..mixins import HistoryMixin
 from .base import BaseStorage
@@ -21,21 +22,10 @@ from .base import BaseStorage
 logger = logging.getLogger(__name__)
 
 
-def throws_swift_error(func):
-    """Decorator catches SwiftError or ClientException, then logs and re-raises it"""
-
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except (SwiftError, ClientException) as error:
-            logger.error(error.value)
-            raise error
-
-    return wrapper
-
-
-class SwiftStorage(HistoryMixin, BaseStorage):
-    """OVH's Swift storage backend"""
+class SwiftStorage(
+    HistoryMixin, BaseStorage
+):  # pylint: disable=too-many-instance-attributes
+    """OpenStack's Swift storage backend"""
 
     name = "swift"
 
@@ -56,50 +46,54 @@ class SwiftStorage(HistoryMixin, BaseStorage):
     ):
         """Setup options for the SwiftService"""
 
-        self.options = {
-            "os_auth_url": os_auth_url,
-            "os_identity_api_version": os_identity_api_version,
-            "os_user_domain_name": os_user_domain_name,
-            "os_project_domain_name": os_project_domain_name,
-            "os_tenant_id": os_tenant_id,
-            "os_tenant_name": os_tenant_name,
-            "os_username": os_username,
-            "os_password": os_password,
-            "os_region_name": os_region_name,
-            "os_storage_url": os_storage_url,
+        self.os_tenant_id = os_tenant_id
+        self.os_tenant_name = os_tenant_name
+        self.os_username = os_username
+        self.os_password = os_password
+        self.os_region_name = os_region_name
+        self.os_user_domain_name = os_user_domain_name
+        self.os_project_domain_name = os_project_domain_name
+        self.os_auth_url = os_auth_url
+        self.os_identity_api_version = os_identity_api_version
+        self.container = urlparse(os_storage_url).path.rpartition("/")[-1]
+        self.os_storage_url = os_storage_url.replace(f"/{self.container}", "")
+
+        with SwiftService(self.options) as swift:
+            stats = swift.stat()
+            if not stats["success"]:
+                msg = "SwiftStorage backend unable to connect: %s"
+                logger.error(msg, stats["error"])
+                raise BackendParameterException(msg % stats["error"])
+
+    @cached_property
+    def options(self):
+        """Returns the required options for the SwiftService"""
+
+        return {
+            "os_auth_url": self.os_auth_url,
+            "os_identity_api_version": self.os_identity_api_version,
+            "os_password": self.os_password,
+            "os_project_domain_name": self.os_project_domain_name,
+            "os_region_name": self.os_region_name,
+            "os_storage_url": self.os_storage_url,
+            "os_tenant_id": self.os_tenant_id,
+            "os_tenant_name": self.os_tenant_name,
+            "os_username": self.os_username,
+            "os_user_domain_name": self.os_user_domain_name,
         }
-        self._check_options()
-        self.container = os_storage_url.split("/")[-1]
-        self.options["os_storage_url"] = os_storage_url.replace(
-            f"/{self.container}", ""
-        )
 
-    def _check_options(self):
-        """Verify that all options are not None nor empty"""
-
-        for option_name in self.options:
-            option = self.options[option_name]
-            # pylint: disable=protected-access
-            if option is not None and not isinstance(option, inspect._empty):
-                continue
-            msg = "SwiftStorage backend instance requires the %s option to be set"
-            logger.error(msg, option_name)
-            raise BackendParameterException(msg % option_name)
-
-    @throws_swift_error
     def list(self, details=False, new=False):
         """List files in the storage backend"""
 
         archives_to_skip = set()
         if new:
-            for entry in filter(self.fetched_from_backend, self.history):
-                archives_to_skip.add(entry["id"])
+            archives_to_skip = self.get_command_history(self.name, "fetch")
         with SwiftService(self.options) as swift:
             for page in swift.list(self.container):
                 if not page["success"]:
                     msg = "Failed to list container %s: %s"
                     logger.error(msg, page["container"], page["error"])
-                    continue
+                    raise BackendException(msg % (page["container"], page["error"]))
                 for archive in page["listing"]:
                     if new and archive["name"] in archives_to_skip:
                         continue
@@ -111,7 +105,6 @@ class SwiftStorage(HistoryMixin, BaseStorage):
         # What's the purpose of this function ? Seems not used anywhere.
         return f"{self.options.get('os_storage_url')}/{name}"
 
-    @throws_swift_error
     def read(self, name, chunk_size=None):
         """Read `name` object and stream its content in chunks of (max) 2 ** 16
 
@@ -123,12 +116,17 @@ class SwiftStorage(HistoryMixin, BaseStorage):
 
         logger.debug("Getting archive: %s", name)
 
-        options = {"options": {"out_file": "/dev/stdout"}}
         with SwiftService(self.options) as swift:
-            download = next(swift.download(self.container, [name], **options))
-        if not download["success"]:
-            logger.error(download["error"])
-            return
+            download = next(swift.download(self.container, [name], {"out_file": "-"}))
+        if "contents" not in download:
+            msg = "Failed to download %s: %s"
+            logger.error(msg, download["object"], download["error"])
+            raise BackendException(msg % (download["object"], download["error"]))
+        size = 0
+        for chunk in download["contents"]:
+            logger.debug("Chunk %s", len(chunk))
+            size += len(chunk)
+            sys.stdout.buffer.write(chunk)
 
         # Archive fetched, add a new entry to the history
         self.append_to_history(
@@ -136,12 +134,11 @@ class SwiftStorage(HistoryMixin, BaseStorage):
                 "backend": self.name,
                 "command": "fetch",
                 "id": name,
-                "size": download["read_length"],
-                "fetched_at": self.get_current_iso_time(),
+                "size": size,
+                "fetched_at": now(),
             }
         )
 
-    @throws_swift_error
     def write(self, name, chunk_size=None, overwrite=False):
         """Write content to the `name` target in chunks of (max) 2 ** 16"""
 
@@ -157,7 +154,7 @@ class SwiftStorage(HistoryMixin, BaseStorage):
             for upload in swift.upload(self.container, [swift_object]):
                 if not upload["success"]:
                     logger.error(upload["error"])
-                    raise BackendParameterException(upload["error"])
+                    raise BackendException(upload["error"])
 
         # Archive written, add a new entry to the history
         self.append_to_history(
@@ -165,6 +162,6 @@ class SwiftStorage(HistoryMixin, BaseStorage):
                 "backend": self.name,
                 "command": "push",
                 "id": name,
-                "pushed_at": self.get_current_iso_time(),
+                "pushed_at": now(),
             }
         )

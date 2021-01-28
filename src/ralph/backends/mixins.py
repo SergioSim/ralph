@@ -1,6 +1,5 @@
 """Backend mixins for Ralph"""
 
-import datetime
 import json
 import logging
 
@@ -55,8 +54,12 @@ class HistoryMixin:
 
         self.write_history(self.history + [event])
 
-    @staticmethod
-    def get_current_iso_time():
-        """Return the current UTC time in ISO format"""
+    def get_command_history(self, backend_name, command):
+        """Returns a set of entry ids from the history for a command and backend_name"""
 
-        return datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
+        def from_backend(entry):
+            """Return if the entry was fetched by the backend"""
+
+            return entry["backend"] == backend_name and entry["command"] == command
+
+        return set(entry["id"] for entry in filter(from_backend, self.history))

@@ -88,6 +88,10 @@ DEFAULT_LOGGING_CONFIG = {
             "handlers": ["console"],
             "level": "INFO",
         },
+        "swiftclient": {
+            "handlers": ["console"],
+            "level": "ERROR",
+        },
     },
 }
 

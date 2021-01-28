@@ -12,7 +12,7 @@ WORKDIR /build
 COPY . /build/
 
 RUN apt-get update && \
-    apt-get install -y gcc python3-netifaces && \
+    apt-get install -y gcc libc6-dev && \
     rm -rf /var/lib/apt/lists/* && \
     python setup.py install
 

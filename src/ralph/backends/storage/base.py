@@ -23,7 +23,3 @@ class BaseStorage(ABC):
     @abstractmethod
     def write(self, name, chunk_size=4096, overwrite=False):
         """Write content to the `name` target"""
-
-    def fetched_from_backend(self, entry):
-        """Return if the entry was fetched by the backend"""
-        return entry["backend"] == self.name and entry["command"] == "fetch"
