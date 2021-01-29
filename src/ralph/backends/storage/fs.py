@@ -60,7 +60,7 @@ class FSStorage(HistoryMixin, BaseStorage):
         logger.debug("Found %d archives", len(archives))
 
         if new:
-            archives = set(archives) - self.get_command_history(self.name, "fetch")
+            archives = set(archives) - set(self.get_command_history(self.name, "fetch"))
             logger.debug("New archives: %d", len(archives))
 
         for archive in archives:

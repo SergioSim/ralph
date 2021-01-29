@@ -56,12 +56,12 @@ class SwiftStorage(
         self.os_auth_url = os_auth_url
         self.os_identity_api_version = os_identity_api_version
         self.container = urlparse(os_storage_url).path.rpartition("/")[-1]
-        self.os_storage_url = os_storage_url.replace(f"/{self.container}", "")
+        self.os_storage_url = os_storage_url.removesuffix(f"/{self.container}")
 
         with SwiftService(self.options) as swift:
             stats = swift.stat()
             if not stats["success"]:
-                msg = "SwiftStorage backend unable to connect: %s"
+                msg = "Unable to connect to the requested container: %s"
                 logger.error(msg, stats["error"])
                 raise BackendParameterException(msg % stats["error"])
 
@@ -87,7 +87,7 @@ class SwiftStorage(
 
         archives_to_skip = set()
         if new:
-            archives_to_skip = self.get_command_history(self.name, "fetch")
+            archives_to_skip = set(self.get_command_history(self.name, "fetch"))
         with SwiftService(self.options) as swift:
             for page in swift.list(self.container):
                 if not page["success"]:

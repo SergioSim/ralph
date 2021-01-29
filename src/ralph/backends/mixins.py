@@ -57,9 +57,7 @@ class HistoryMixin:
     def get_command_history(self, backend_name, command):
         """Returns a set of entry ids from the history for a command and backend_name"""
 
-        def from_backend(entry):
-            """Return if the entry was fetched by the backend"""
-
-            return entry["backend"] == backend_name and entry["command"] == command
-
-        return set(entry["id"] for entry in filter(from_backend, self.history))
+        from_backend = (
+            lambda item: item["backend"] == backend_name and item["command"] == command
+        )
+        return [entry["id"] for entry in filter(from_backend, self.history)]
