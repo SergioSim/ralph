@@ -68,7 +68,7 @@ RALPH_SWIFT_OS_STORAGE_URL=http://swift:8080/v1/KEY_cd238e84310a46e58af7f1d51588
 2) Push a first object (forcefully) to create the test container
 
 ```
-echo "some content" | ./bin/ralph push -b swift -f some_archive_name
+$ echo "some content" | ./bin/ralph push -b swift -f some_archive_name
 ```
 
 Now ralph should be fully functional with the local Swift storage.

@@ -104,11 +104,11 @@ def test_swift_list_with_failed_connection_should_log_the_error(
     swift = swift()
     msg = "Failed to list container ralph_logs_container: Container not found"
     with pytest.raises(BackendException, match=msg):
-        list(swift.list())
+        next(swift.list())
     with pytest.raises(BackendException, match=msg):
-        list(swift.list(new=True))
+        next(swift.list(new=True))
     with pytest.raises(BackendException, match=msg):
-        list(swift.list(details=True))
+        next(swift.list(details=True))
     logger_name = "ralph.backends.storage.swift"
     assert caplog.record_tuples == [(logger_name, logging.ERROR, msg)] * 3
 
